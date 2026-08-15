@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { shallow } from 'zustand/shallow';
+import { Hand, History, MessageSquare, MousePointer2, Trash2 } from 'lucide-react';
 import { useStore } from '../store';
 import { useApi } from '../hooks/useApi';
 import { useFlowCollab, colorFor } from '../collab/useFlowCollab';
@@ -9,6 +10,10 @@ import { PipelineToolbar } from '../toolbar';
 import { PipelineUI } from '../ui';
 import { ExportMenu } from '../components/ExportMenu';
 import { VersionPanel } from '../components/VersionPanel';
+import { BrandLink } from '../components/BrandLink';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { cn } from '../lib/cn';
 
 const stripTransient = ({ selected, dragging, resizing, ...node }) => node;
 
@@ -97,9 +102,13 @@ function CollabEditor({ id, initialTitle, initialDoc }) {
     [user]
   );
 
+  const deleteSelected = useStore((s) => s.deleteSelected);
+  const hasSelection = useStore((s) => s.nodes.some((n) => n.selected) || s.edges.some((e) => e.selected));
+
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState('saved');
   const [commentMode, setCommentMode] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
 
   // Keep churny callbacks in refs so cursor-driven re-renders don't reset the
@@ -133,52 +142,76 @@ function CollabEditor({ id, initialTitle, initialDoc }) {
 
   return (
     <div className="flex h-screen flex-col bg-canvas">
-      <header className="flex items-center justify-between gap-4 border-b border-borderSoft bg-panel px-6 py-3">
+      <header className="flex items-center justify-between gap-4 border-b border-borderSoft bg-panel px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            title="Back to dashboard"
-            className="text-lg text-slate-400 hover:text-white"
-          >
-            ←
-          </button>
-          <input
+          <BrandLink />
+          <span className="text-borderSoft">/</span>
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={saveTitle}
             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-            className="rounded-md bg-transparent px-2 py-1 text-sm font-semibold text-slate-100 outline-none hover:bg-panelLight focus:bg-panelLight"
+            className="h-8 w-48 border-transparent bg-transparent font-semibold hover:bg-panelLight focus:bg-panelLight"
           />
         </div>
-        <div className="flex items-center gap-3">
-          <PresenceBar status={status} cursors={cursors} />
-          <button
-            type="button"
-            onClick={() => setCommentMode((v) => !v)}
-            title="Comment mode — click the canvas to leave a comment"
-            className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${
-              commentMode
-                ? 'border-accent bg-accent/20 text-white'
-                : 'border-borderSoft text-slate-200 hover:border-accent'
-            }`}
+
+        <div className="flex items-center gap-2">
+          {/* Move / select tools */}
+          <div className="flex items-center rounded-lg border border-borderSoft bg-panelLight p-0.5">
+            <Button
+              variant={selectMode ? 'ghost' : 'secondary'}
+              size="iconSm"
+              title="Move / pan"
+              onClick={() => setSelectMode(false)}
+            >
+              <Hand size={15} />
+            </Button>
+            <Button
+              variant={selectMode ? 'secondary' : 'ghost'}
+              size="iconSm"
+              title="Select (drag a box to multi-select)"
+              onClick={() => setSelectMode(true)}
+            >
+              <MousePointer2 size={15} />
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            size="iconSm"
+            title="Delete selection"
+            disabled={!hasSelection}
+            onClick={deleteSelected}
           >
-            💬 Comment
-          </button>
+            <Trash2 size={15} />
+          </Button>
+
+          <span className="mx-1 h-5 w-px bg-borderSoft" />
+
+          <PresenceBar status={status} cursors={cursors} />
+          <Button
+            variant={commentMode ? 'default' : 'secondary'}
+            size="sm"
+            title="Comment mode — click the canvas to leave a comment"
+            onClick={() => setCommentMode((v) => !v)}
+          >
+            <MessageSquare size={15} /> Comment
+          </Button>
           <EdgeStylePicker />
           <ExportMenu title={title} />
-          <button
-            type="button"
-            onClick={() => setShowVersions(true)}
-            className="rounded-lg border border-borderSoft px-3 py-1.5 text-sm font-semibold text-slate-200 hover:border-accent"
-          >
-            History
-          </button>
+          <Button variant="secondary" size="sm" onClick={() => setShowVersions(true)}>
+            <History size={15} /> History
+          </Button>
           <SaveIndicator state={saveState} />
         </div>
       </header>
       <PipelineToolbar />
-      <PipelineUI cursors={cursors} onCursorMove={setCursor} commentMode={commentMode} me={me} />
+      <PipelineUI
+        cursors={cursors}
+        onCursorMove={setCursor}
+        commentMode={commentMode}
+        selectMode={selectMode}
+        me={me}
+      />
 
       {showVersions && (
         <VersionPanel

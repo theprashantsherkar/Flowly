@@ -41,14 +41,14 @@ export function HeroAnimation() {
 
           {/* Process */}
           <g className="fly-node" style={{ animationDelay: '.4s' }}>
-            <rect x="180" y="42" width="130" height="48" rx="6" fill="rgba(99,102,241,.16)" stroke="#6366f1" strokeWidth="2" />
-            <text x="245" y="71" textAnchor="middle" fill="#e0e7ff" fontSize="14" fontFamily="Inter, sans-serif">Plan work</text>
+            <rect x="180" y="42" width="130" height="48" rx="6" fill="rgba(37,99,235,.16)" stroke="#2563eb" strokeWidth="2" />
+            <text x="245" y="71" textAnchor="middle" fill="#dbeafe" fontSize="14" fontFamily="Inter, sans-serif">Plan work</text>
           </g>
 
           {/* Decision (diamond) */}
           <g className="fly-node" style={{ animationDelay: '.8s' }}>
-            <polygon points="250,142 312,190 250,238 188,190" fill="rgba(217,70,239,.16)" stroke="#d946ef" strokeWidth="2" />
-            <text x="250" y="195" textAnchor="middle" fill="#fae8ff" fontSize="13" fontFamily="Inter, sans-serif">Approve?</text>
+            <polygon points="250,142 312,190 250,238 188,190" fill="rgba(217,119,6,.16)" stroke="#d97706" strokeWidth="2" />
+            <text x="250" y="195" textAnchor="middle" fill="#fde68a" fontSize="13" fontFamily="Inter, sans-serif">Approve?</text>
           </g>
 
           {/* Ship (process) */}
@@ -59,8 +59,8 @@ export function HeroAnimation() {
 
           {/* Collaborator cursors */}
           <g className="fly-cursor" style={{ animation: 'fly-c1 9s infinite' }}>
-            <path d="M0,0 L0,16 L4,12 L7,18 L9,17 L6,11 L11,11 Z" fill="#6366f1" stroke="#fff" strokeWidth=".7" />
-            <rect x="12" y="10" width="42" height="16" rx="8" fill="#6366f1" />
+            <path d="M0,0 L0,16 L4,12 L7,18 L9,17 L6,11 L11,11 Z" fill="#2563eb" stroke="#fff" strokeWidth=".7" />
+            <rect x="12" y="10" width="42" height="16" rx="8" fill="#2563eb" />
             <text x="33" y="22" textAnchor="middle" fill="#fff" fontSize="10" fontFamily="Inter, sans-serif">Aria</text>
           </g>
           <g className="fly-cursor" style={{ animation: 'fly-c2 11s infinite' }}>

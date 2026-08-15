@@ -1,9 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { UserButton } from '@clerk/clerk-react';
+import { FileText, MoreVertical, Pencil, Plus, Trash2, User, Users } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import { MembersPanel } from '../components/MembersPanel';
 import { TEMPLATES } from '../lib/templates';
+import { BrandLink } from '../components/BrandLink';
+import { Button } from '../components/ui/button';
+import { PromptDialog, ConfirmDialog } from '../components/ui/prompt-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { cn } from '../lib/cn';
 
 function formatDate(value) {
   try {
@@ -14,10 +26,57 @@ function formatDate(value) {
 }
 
 const roleBadge = {
-  OWNER: 'bg-amber-500/20 text-amber-300',
-  ADMIN: 'bg-indigo-500/20 text-indigo-300',
-  MEMBER: 'bg-slate-500/20 text-slate-300',
+  OWNER: 'bg-amber-500/15 text-amber-300',
+  ADMIN: 'bg-blue-500/15 text-blue-300',
+  MEMBER: 'bg-slate-500/15 text-slate-300',
 };
+
+function FlowCard({ flow, onOpen, onRename, onDelete }) {
+  return (
+    <div className="group relative rounded-xl border border-borderSoft bg-panel p-5 transition-colors hover:bg-panelLight">
+      <button type="button" onClick={onOpen} className="block w-full text-left">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-panelLight text-slate-400 transition-colors group-hover:bg-panel">
+          <FileText size={18} />
+        </span>
+        <h3 className="mt-3 truncate font-medium text-slate-100">{flow.title}</h3>
+        <p className="mt-1 text-xs text-slate-500">Edited {formatDate(flow.updatedAt)}</p>
+      </button>
+      <div className="absolute right-2.5 top-2.5 opacity-0 transition group-hover:opacity-100 data-[open=true]:opacity-100">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="iconSm" aria-label="Flow actions">
+              <MoreVertical size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => onRename(flow)}>
+              <Pencil size={14} /> Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem destructive onSelect={() => onDelete(flow)}>
+              <Trash2 size={14} /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
+
+function SidebarItem({ active, icon, label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
+        active ? 'bg-panelLight text-white' : 'text-slate-400 hover:bg-panel hover:text-slate-200'
+      )}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </button>
+  );
+}
 
 export default function Dashboard() {
   const api = useApi();
@@ -29,8 +88,12 @@ export default function Dashboard() {
   const [selectedTeamId, setSelectedTeamId] = useState(searchParams.get('team') || '');
   const [status, setStatus] = useState('loading');
   const [creating, setCreating] = useState(false);
+
   const [showMembers, setShowMembers] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showNewTeam, setShowNewTeam] = useState(false);
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -40,7 +103,8 @@ export default function Dashboard() {
       setFlows(flowsData);
       setSelectedTeamId((current) => {
         if (current && teamsData.some((t) => t.id === current)) return current;
-        return teamsData[0]?.id || '';
+        const personal = teamsData.find((t) => t.isPersonal);
+        return personal?.id || teamsData[0]?.id || '';
       });
       setStatus('ready');
     } catch {
@@ -52,15 +116,11 @@ export default function Dashboard() {
     load();
   }, [load]);
 
-  const selectedTeam = useMemo(
-    () => teams.find((t) => t.id === selectedTeamId),
-    [teams, selectedTeamId]
-  );
+  const personalTeam = useMemo(() => teams.find((t) => t.isPersonal), [teams]);
+  const otherTeams = useMemo(() => teams.filter((t) => !t.isPersonal), [teams]);
+  const selectedTeam = useMemo(() => teams.find((t) => t.id === selectedTeamId), [teams, selectedTeamId]);
   const teamFlows = useMemo(
-    () =>
-      flows.filter(
-        (f) => f.teamId === selectedTeamId || (selectedTeam?.isPersonal && !f.teamId)
-      ),
+    () => flows.filter((f) => f.teamId === selectedTeamId || (selectedTeam?.isPersonal && !f.teamId)),
     [flows, selectedTeamId, selectedTeam]
   );
 
@@ -78,169 +138,195 @@ export default function Dashboard() {
         title: template.id === 'blank' ? undefined : template.name,
       });
       const doc = template.build();
-      if (doc.nodes.length || doc.edges.length) {
-        await api.updateFlow(flow.id, { document: doc });
-      }
+      if (doc.nodes.length || doc.edges.length) await api.updateFlow(flow.id, { document: doc });
       navigate(`/flow/${flow.id}`);
     } catch {
       setCreating(false);
     }
   };
 
-  const handleNewTeam = async () => {
-    const name = window.prompt('Name your team');
-    if (!name || !name.trim()) return;
-    const team = await api.createTeam(name.trim());
+  const createTeam = async (name) => {
+    if (!name) return;
+    const team = await api.createTeam(name);
     await load();
     selectTeam(team.id);
   };
 
-  const handleRename = async (flow) => {
-    const title = window.prompt('Rename flow', flow.title);
-    if (!title || title.trim() === flow.title) return;
-    await api.updateFlow(flow.id, { title: title.trim() });
+  const renameFlow = async (title) => {
+    if (!renameTarget || !title || title === renameTarget.title) return;
+    await api.updateFlow(renameTarget.id, { title });
     load();
   };
 
-  const handleDelete = async (flow) => {
-    if (!window.confirm(`Delete "${flow.title}"?`)) return;
-    await api.deleteFlow(flow.id);
-    setFlows((prev) => prev.filter((f) => f.id !== flow.id));
+  const deleteFlow = async () => {
+    if (!deleteTarget) return;
+    await api.deleteFlow(deleteTarget.id);
+    setFlows((prev) => prev.filter((f) => f.id !== deleteTarget.id));
   };
 
   return (
-    <div className="min-h-screen bg-canvas text-slate-100">
-      <header className="flex items-center justify-between border-b border-borderSoft bg-panel px-8 py-4">
-        <div className="flex items-center gap-4">
-          <span className="text-lg font-semibold">
-            Flowly<span className="text-accent">.</span>
-          </span>
-          {teams.length > 0 && (
-            <select
-              value={selectedTeamId}
-              onChange={(e) => selectTeam(e.target.value)}
-              className="rounded-lg border border-borderSoft bg-panelLight px-3 py-1.5 text-sm text-slate-200"
-            >
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.isPersonal ? 'Personal' : t.name}
-                </option>
-              ))}
-            </select>
-          )}
-          <button
-            type="button"
-            onClick={handleNewTeam}
-            className="text-sm text-slate-400 hover:text-white"
-          >
-            + Team
-          </button>
+    <div className="flex min-h-screen bg-canvas text-slate-100">
+      {/* Sidebar */}
+      <aside className="flex w-60 flex-col border-r border-borderSoft bg-panel/40 px-3 py-4">
+        <div className="px-2">
+          <BrandLink />
         </div>
-        <UserButton afterSignOutUrl="/" />
-      </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold">{selectedTeam?.isPersonal ? 'Your flows' : selectedTeam?.name}</h1>
-            {selectedTeam && (
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${roleBadge[selectedTeam.role]}`}>
-                {selectedTeam.role}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {selectedTeam && !selectedTeam.isPersonal && (
-              <button
-                type="button"
-                onClick={() => setShowMembers(true)}
-                className="rounded-lg border border-borderSoft px-4 py-2 text-sm font-semibold text-slate-200 hover:border-accent"
-              >
-                👥 Members ({selectedTeam.memberCount})
-              </button>
-            )}
+        <div className="mt-6 space-y-1">
+          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Personal</p>
+          {personalTeam && (
+            <SidebarItem
+              active={selectedTeamId === personalTeam.id}
+              icon={<User size={16} />}
+              label="My flows"
+              onClick={() => selectTeam(personalTeam.id)}
+            />
+          )}
+        </div>
+
+        <div className="mt-6 space-y-1">
+          <div className="flex items-center justify-between px-3 pb-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Teams</p>
             <button
               type="button"
-              onClick={() => setShowTemplates(true)}
-              disabled={creating}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accentHover disabled:opacity-60"
+              onClick={() => setShowNewTeam(true)}
+              className="text-slate-500 transition hover:text-white"
+              aria-label="New team"
             >
-              {creating ? 'Creating…' : '+ New flow'}
+              <Plus size={15} />
             </button>
           </div>
+          {otherTeams.length === 0 && (
+            <p className="px-3 py-1 text-xs text-slate-600">No teams yet</p>
+          )}
+          {otherTeams.map((t) => (
+            <SidebarItem
+              key={t.id}
+              active={selectedTeamId === t.id}
+              icon={<Users size={16} />}
+              label={t.name}
+              onClick={() => selectTeam(t.id)}
+            />
+          ))}
         </div>
 
-        {status === 'loading' && <p className="text-slate-400">Loading…</p>}
-        {status === 'error' && (
-          <p className="text-rose-400">Couldn’t load your workspace. Is the API running on :4000?</p>
-        )}
+        <div className="mt-auto flex items-center gap-2 border-t border-borderSoft px-2 pt-4">
+          <UserButton afterSignOutUrl="/" />
+          <span className="text-xs text-slate-500">Account</span>
+        </div>
+      </aside>
 
-        {status === 'ready' && teamFlows.length === 0 && (
-          <div className="rounded-xl border border-dashed border-borderSoft p-12 text-center text-slate-400">
-            No flows here yet. Create your first one to get started.
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-5xl px-8 py-8">
+          <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {selectedTeam?.isPersonal ? 'My flows' : selectedTeam?.name || 'Flows'}
+              </h1>
+              {selectedTeam && !selectedTeam.isPersonal && (
+                <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', roleBadge[selectedTeam.role])}>
+                  {selectedTeam.role}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedTeam && !selectedTeam.isPersonal && (
+                <Button variant="secondary" size="sm" onClick={() => setShowMembers(true)}>
+                  <Users size={15} /> Members ({selectedTeam.memberCount})
+                </Button>
+              )}
+              <Button size="sm" onClick={() => setShowTemplates(true)} disabled={creating}>
+                <Plus size={15} /> {creating ? 'Creating…' : 'New flow'}
+              </Button>
+            </div>
           </div>
-        )}
 
-        {status === 'ready' && teamFlows.length > 0 && (
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {teamFlows.map((flow) => (
-              <li
-                key={flow.id}
-                className="group flex flex-col justify-between rounded-xl border border-borderSoft bg-panel p-5 transition hover:border-accent"
-              >
-                <button type="button" onClick={() => navigate(`/flow/${flow.id}`)} className="text-left">
-                  <h2 className="font-semibold text-slate-100">{flow.title}</h2>
-                  <p className="mt-1 text-xs text-slate-400">Edited {formatDate(flow.updatedAt)}</p>
-                </button>
-                <div className="mt-4 flex gap-3 text-xs">
-                  <button type="button" onClick={() => handleRename(flow)} className="text-slate-400 hover:text-white">
-                    Rename
-                  </button>
-                  <button type="button" onClick={() => handleDelete(flow)} className="text-slate-400 hover:text-rose-400">
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+          {status === 'loading' && <p className="text-slate-400">Loading…</p>}
+          {status === 'error' && (
+            <p className="text-red-400">Couldn’t load your workspace. Is the API running on :4000?</p>
+          )}
+
+          {status === 'ready' && teamFlows.length === 0 && (
+            <div className="rounded-xl border border-dashed border-borderSoft p-16 text-center">
+              <p className="text-slate-400">No flows here yet.</p>
+              <Button className="mt-4" onClick={() => setShowTemplates(true)}>
+                <Plus size={15} /> Create your first flow
+              </Button>
+            </div>
+          )}
+
+          {status === 'ready' && teamFlows.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {teamFlows.map((flow) => (
+                <FlowCard
+                  key={flow.id}
+                  flow={flow}
+                  onOpen={() => navigate(`/flow/${flow.id}`)}
+                  onRename={setRenameTarget}
+                  onDelete={setDeleteTarget}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
       {showMembers && selectedTeam && (
         <MembersPanel team={selectedTeam} myRole={selectedTeam.role} onClose={() => setShowMembers(false)} />
       )}
 
-      {showTemplates && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-          onClick={() => setShowTemplates(false)}
-        >
-          <div
-            className="w-full max-w-2xl rounded-2xl border border-borderSoft bg-panel p-6 shadow-node"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-100">Start a new flow</h2>
-              <button type="button" onClick={() => setShowTemplates(false)} className="text-slate-400 hover:text-white">
-                ✕
+      <PromptDialog
+        open={showNewTeam}
+        onOpenChange={setShowNewTeam}
+        title="Create a team"
+        description="Teams let you share flows and collaborate with others."
+        placeholder="Team name"
+        submitLabel="Create team"
+        onSubmit={createTeam}
+      />
+
+      <PromptDialog
+        open={!!renameTarget}
+        onOpenChange={(v) => !v && setRenameTarget(null)}
+        title="Rename flow"
+        placeholder="Flow name"
+        defaultValue={renameTarget?.title || ''}
+        submitLabel="Rename"
+        onSubmit={renameFlow}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => !v && setDeleteTarget(null)}
+        title="Delete flow?"
+        description={`"${deleteTarget?.title}" will be permanently deleted. This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={deleteFlow}
+      />
+
+      <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Start a new flow</DialogTitle>
+            <DialogDescription>Pick a starting point.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {TEMPLATES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleCreateFromTemplate(t)}
+                className="rounded-xl border border-borderSoft bg-panelLight p-4 text-left transition-colors hover:bg-panel"
+              >
+                <h3 className="font-medium text-slate-100">{t.name}</h3>
+                <p className="mt-1 text-xs text-slate-400">{t.description}</p>
               </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-              {TEMPLATES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => handleCreateFromTemplate(t)}
-                  className="rounded-xl border border-borderSoft bg-panelLight p-4 text-left transition hover:border-accent"
-                >
-                  <h3 className="font-semibold text-slate-100">{t.name}</h3>
-                  <p className="mt-1 text-xs text-slate-400">{t.description}</p>
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

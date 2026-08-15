@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { X, Save, History } from 'lucide-react';
+import { Button } from './ui/button';
+import { PromptDialog, ConfirmDialog } from './ui/prompt-dialog';
 
 const stripTransient = ({ selected, dragging, resizing, ...node }) => node;
 
@@ -7,6 +10,8 @@ export function VersionPanel({ flowId, api, getSnapshot, restore, onClose }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [showSave, setShowSave] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -21,17 +26,12 @@ export function VersionPanel({ flowId, api, getSnapshot, restore, onClose }) {
     load();
   }, [load]);
 
-  const saveVersion = async () => {
+  const saveVersion = async (label) => {
     setBusy(true);
     setError('');
     try {
-      const label = window.prompt('Name this version (optional)') || undefined;
       const snap = getSnapshot();
-      await api.saveVersion(
-        flowId,
-        { nodes: snap.nodes.map(stripTransient), edges: snap.edges },
-        label
-      );
+      await api.saveVersion(flowId, { nodes: snap.nodes.map(stripTransient), edges: snap.edges }, label || undefined);
       load();
     } catch (e) {
       setError(e.message);
@@ -40,16 +40,15 @@ export function VersionPanel({ flowId, api, getSnapshot, restore, onClose }) {
     }
   };
 
-  const restoreVersion = async (versionId) => {
-    if (!window.confirm('Restore this version? It replaces the current canvas for everyone.')) return;
+  const restoreVersion = async () => {
+    if (!restoreTarget) return;
     setBusy(true);
     try {
-      const version = await api.getVersion(flowId, versionId);
+      const version = await api.getVersion(flowId, restoreTarget.id);
       restore(version.snapshot);
       onClose();
     } catch (e) {
       setError(e.message);
-    } finally {
       setBusy(false);
     }
   };
@@ -57,54 +56,68 @@ export function VersionPanel({ flowId, api, getSnapshot, restore, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
       <div
-        className="h-full w-80 border-l border-borderSoft bg-panel p-5 shadow-node"
+        className="flex h-full w-80 flex-col border-l border-borderSoft bg-panel p-5 shadow-node"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-100">Version history</h2>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white">
-            ✕
-          </button>
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-100">
+            <History size={18} /> Version history
+          </h2>
+          <Button variant="ghost" size="iconSm" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </Button>
         </div>
 
-        <button
-          type="button"
-          onClick={saveVersion}
-          disabled={busy}
-          className="mb-4 w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accentHover disabled:opacity-60"
-        >
-          💾 Save current version
-        </button>
+        <Button className="mb-4 w-full" onClick={() => setShowSave(true)} disabled={busy}>
+          <Save size={15} /> Save current version
+        </Button>
 
-        {error && <p className="mb-3 text-sm text-rose-400">{error}</p>}
+        {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
-        {loading ? (
-          <p className="text-sm text-slate-400">Loading…</p>
-        ) : versions.length === 0 ? (
-          <p className="text-sm text-slate-400">No saved versions yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {versions.map((v) => (
-              <li
-                key={v.id}
-                className="flex items-center justify-between rounded-lg border border-borderSoft bg-panelLight px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-slate-100">{v.label || 'Snapshot'}</p>
-                  <p className="text-xs text-slate-400">{new Date(v.createdAt).toLocaleString()}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => restoreVersion(v.id)}
-                  disabled={busy}
-                  className="text-xs font-semibold text-accent hover:text-accentHover"
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <p className="text-sm text-slate-400">Loading…</p>
+          ) : versions.length === 0 ? (
+            <p className="text-sm text-slate-400">No saved versions yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {versions.map((v) => (
+                <li
+                  key={v.id}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-borderSoft bg-panelLight px-3 py-2"
                 >
-                  Restore
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-slate-100">{v.label || 'Snapshot'}</p>
+                    <p className="text-xs text-slate-500">{new Date(v.createdAt).toLocaleString()}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setRestoreTarget(v)} disabled={busy}>
+                    Restore
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <div onClick={(e) => e.stopPropagation()}>
+        <PromptDialog
+          open={showSave}
+          onOpenChange={setShowSave}
+          title="Save version"
+          description="Give this snapshot a name so you can find it later."
+          placeholder="e.g. Before big refactor"
+          submitLabel="Save version"
+          onSubmit={saveVersion}
+        />
+        <ConfirmDialog
+          open={!!restoreTarget}
+          onOpenChange={(v) => !v && setRestoreTarget(null)}
+          title="Restore this version?"
+          description="This replaces the current canvas for everyone in the room."
+          confirmLabel="Restore"
+          onConfirm={restoreVersion}
+        />
       </div>
     </div>
   );

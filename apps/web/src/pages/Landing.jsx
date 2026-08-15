@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
+import { Github, Twitter, Linkedin } from 'lucide-react';
 import { HeroAnimation } from '../components/HeroAnimation';
+import { BrandLink } from '../components/BrandLink';
+import { buttonVariants } from '../components/ui/button';
 
 function FeatureIcon({ name }) {
   const common = {
@@ -55,26 +58,30 @@ const FEATURES = [
   { icon: 'cursor', title: 'Real-time by default', body: 'Edit together with live cursors and instant sync — no refresh, no conflicts.' },
 ];
 
+const FOOTER = [
+  { title: 'Product', links: ['Flowcharts', 'Whiteboard', 'Templates', 'Real-time'] },
+  { title: 'Solutions', links: ['For teams', 'Product', 'Engineering', 'Education'] },
+  { title: 'Resources', links: ['Docs', 'Guides', 'Changelog', 'Status'] },
+  { title: 'Company', links: ['About', 'Careers', 'Blog', 'Contact'] },
+];
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-canvas text-slate-100">
       <header className="border-b border-borderSoft/70">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-base font-semibold tracking-tight">Flowly</span>
+          <BrandLink />
           <nav className="flex items-center gap-2 text-sm">
             <SignedOut>
-              <Link to="/sign-in" className="rounded-md px-3 py-2 text-slate-300 transition hover:text-white">
+              <Link to="/sign-in" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
                 Sign in
               </Link>
-              <Link
-                to="/sign-up"
-                className="rounded-md bg-accent px-4 py-2 font-medium text-white transition hover:bg-accentHover"
-              >
+              <Link to="/sign-up" className={buttonVariants({ size: 'sm' })}>
                 Get started
               </Link>
             </SignedOut>
             <SignedIn>
-              <Link to="/dashboard" className="rounded-md px-3 py-2 text-slate-300 transition hover:text-white">
+              <Link to="/dashboard" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
                 Dashboard
               </Link>
               <UserButton afterSignOutUrl="/" />
@@ -98,24 +105,15 @@ export default function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <SignedOut>
-                <Link
-                  to="/sign-up"
-                  className="rounded-md bg-accent px-5 py-3 font-medium text-white transition hover:bg-accentHover"
-                >
+                <Link to="/sign-up" className={buttonVariants({ size: 'lg' })}>
                   Start for free
                 </Link>
-                <Link
-                  to="/sign-in"
-                  className="rounded-md border border-borderSoft px-5 py-3 font-medium text-slate-200 transition hover:bg-panel"
-                >
+                <Link to="/sign-in" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
                   Sign in
                 </Link>
               </SignedOut>
               <SignedIn>
-                <Link
-                  to="/dashboard"
-                  className="rounded-md bg-accent px-5 py-3 font-medium text-white transition hover:bg-accentHover"
-                >
+                <Link to="/dashboard" className={buttonVariants({ size: 'lg' })}>
                   Go to your flows
                 </Link>
               </SignedIn>
@@ -133,7 +131,7 @@ export default function Landing() {
           </h2>
           <div className="mt-6 grid gap-px overflow-hidden rounded-xl border border-borderSoft bg-borderSoft sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map((f) => (
-              <div key={f.title} className="bg-canvas p-6">
+              <div key={f.title} className="bg-canvas p-6 transition-colors hover:bg-panel">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-borderSoft text-slate-300">
                   <FeatureIcon name={f.icon} />
                 </div>
@@ -143,10 +141,65 @@ export default function Landing() {
             ))}
           </div>
         </section>
+
+        <section className="mb-16 rounded-2xl border border-borderSoft bg-panel px-8 py-12 text-center">
+          <h2 className="text-2xl font-semibold tracking-tight">Start mapping your ideas today</h2>
+          <p className="mx-auto mt-3 max-w-md text-sm text-slate-400">
+            Free to start. Bring your team when you’re ready.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <SignedOut>
+              <Link to="/sign-up" className={buttonVariants({ size: 'lg' })}>
+                Create your first flow
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link to="/dashboard" className={buttonVariants({ size: 'lg' })}>
+                Go to your flows
+              </Link>
+            </SignedIn>
+          </div>
+        </section>
       </main>
 
-      <footer className="border-t border-borderSoft/70">
-        <div className="mx-auto max-w-6xl px-6 py-6 text-sm text-slate-500">Flowly</div>
+      <footer className="border-t border-borderSoft/70 bg-panel/40">
+        <div className="mx-auto max-w-6xl px-6 py-14">
+          <div className="grid gap-10 lg:grid-cols-[1.5fr_repeat(4,1fr)]">
+            <div>
+              <BrandLink />
+              <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-400">
+                The collaborative canvas for flowcharts, diagrams and decisions — built for teams.
+              </p>
+              <div className="mt-5 flex gap-3 text-slate-400">
+                <a href="#" aria-label="GitHub" className="transition hover:text-white"><Github size={18} /></a>
+                <a href="#" aria-label="Twitter" className="transition hover:text-white"><Twitter size={18} /></a>
+                <a href="#" aria-label="LinkedIn" className="transition hover:text-white"><Linkedin size={18} /></a>
+              </div>
+            </div>
+            {FOOTER.map((col) => (
+              <div key={col.title}>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{col.title}</h3>
+                <ul className="mt-4 space-y-2.5">
+                  {col.links.map((link) => (
+                    <li key={link}>
+                      <a href="#" className="text-sm text-slate-400 transition hover:text-white">
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-borderSoft/70 pt-6 text-xs text-slate-500 sm:flex-row">
+            <span>© {new Date().getFullYear()} Flowly. All rights reserved.</span>
+            <div className="flex gap-5">
+              <a href="#" className="transition hover:text-white">Privacy</a>
+              <a href="#" className="transition hover:text-white">Terms</a>
+              <a href="#" className="transition hover:text-white">Security</a>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );

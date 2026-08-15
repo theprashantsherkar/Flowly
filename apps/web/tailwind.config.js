@@ -4,15 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        canvas: '#0f1420',
-        panel: '#1C2536',
-        panelLight: '#243044',
-        accent: '#6366f1',
-        accentHover: '#4f46e5',
-        borderSoft: '#2d3a52',
+        // Cool neutral base with a formal blue accent (Linear/Vercel-esque).
+        canvas: '#0b0d12',
+        panel: '#141821',
+        panelLight: '#1b2029',
+        borderSoft: '#262b36',
+        accent: '#2563eb',
+        accentHover: '#1d4ed8',
+        destructive: '#dc2626',
       },
       boxShadow: {
-        node: '0 4px 14px rgba(0, 0, 0, 0.35)',
+        node: '0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35)',
       },
     },
   },

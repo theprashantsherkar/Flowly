@@ -83,6 +83,27 @@ export const useStore = create((set, get) => ({
   resolveComment: (id, resolved) => get().sync?.updateComment(id, { resolved }),
   deleteComment: (id) => get().sync?.deleteComment(id),
 
+  // Remove a single node and any edges attached to it.
+  deleteNode: (id) => {
+    const { edges, onNodesChange, onEdgesChange } = get();
+    const edgeRemovals = edges
+      .filter((e) => e.source === id || e.target === id)
+      .map((e) => ({ id: e.id, type: 'remove' }));
+    if (edgeRemovals.length) onEdgesChange(edgeRemovals);
+    onNodesChange([{ id, type: 'remove' }]);
+  },
+  // Remove everything currently selected (nodes + their edges + selected edges).
+  deleteSelected: () => {
+    const { nodes, edges, onNodesChange, onEdgesChange } = get();
+    const selNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
+    const selEdgeIds = new Set(edges.filter((e) => e.selected).map((e) => e.id));
+    const edgeRemovals = edges
+      .filter((e) => selEdgeIds.has(e.id) || selNodeIds.has(e.source) || selNodeIds.has(e.target))
+      .map((e) => ({ id: e.id, type: 'remove' }));
+    if (edgeRemovals.length) onEdgesChange(edgeRemovals);
+    if (selNodeIds.size) onNodesChange([...selNodeIds].map((id) => ({ id, type: 'remove' })));
+  },
+
   // Direct array setters used by the Yjs observer (never delegate).
   _setNodes: (nodes) => set({ nodes }),
   _setEdges: (edges) => set({ edges }),

@@ -38,7 +38,7 @@ export const SHAPE_DEFINITIONS: ShapeDefinition[] = [
     description: 'A step or action (rectangle).',
     category: 'flowchart',
     defaultSize: { width: 168, height: 68 },
-    defaultColor: '#6366f1',
+    defaultColor: '#2563eb',
   },
   {
     key: 'decision',
@@ -46,7 +46,7 @@ export const SHAPE_DEFINITIONS: ShapeDefinition[] = [
     description: 'A branch / yes-no question (diamond).',
     category: 'flowchart',
     defaultSize: { width: 150, height: 104 },
-    defaultColor: '#d946ef',
+    defaultColor: '#d97706',
   },
   {
     key: 'terminator',
@@ -86,7 +86,7 @@ export const SHAPE_DEFINITIONS: ShapeDefinition[] = [
     description: 'Setup step (hexagon).',
     category: 'flowchart',
     defaultSize: { width: 156, height: 84 },
-    defaultColor: '#8b5cf6',
+    defaultColor: '#0891b2',
   },
   {
     key: 'connector',

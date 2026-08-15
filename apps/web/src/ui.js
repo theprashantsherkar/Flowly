@@ -25,7 +25,7 @@ const selector = (state) => ({
   onConnect: state.onConnect,
 });
 
-export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, me }) => {
+export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, selectMode = false, me }) => {
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [commentDraft, setCommentDraft] = useState(null);
@@ -136,13 +136,16 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, me
         snapToGrid
         snapGrid={[gridSize, gridSize]}
         deleteKeyCode={['Backspace', 'Delete']}
+        selectionOnDrag={selectMode}
+        panOnDrag={!selectMode}
+        selectNodesOnDrag={false}
         fitView
         minZoom={0.2}
       >
-        <Background color="#233047" gap={gridSize} />
+        <Background color="#1e2532" gap={gridSize} />
         <Controls className="!border-borderSoft !bg-panel" />
         <MiniMap
-          nodeColor={(n) => n.data?.color || '#6366f1'}
+          nodeColor={(n) => n.data?.color || '#2563eb'}
           maskColor="rgba(15, 20, 32, 0.6)"
           className="!bg-panel"
           pannable

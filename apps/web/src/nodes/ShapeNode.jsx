@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Handle, Position, NodeResizer, NodeToolbar } from 'reactflow';
+import { Trash2 } from 'lucide-react';
 import { SHAPE_MAP } from '@flowly/shared';
 import { useStore } from '../store';
 import { ShapeSvg } from './ShapeSvg';
@@ -16,6 +17,7 @@ export function ShapeNode({ id, data, selected }) {
   const def = SHAPE_MAP[data.shape] || SHAPE_MAP.process;
   const color = data.color || def.defaultColor;
   const updateNodeField = useStore((s) => s.updateNodeField);
+  const deleteNode = useStore((s) => s.deleteNode);
 
   const [editing, setEditing] = useState(false);
   const textareaRef = useRef(null);
@@ -44,7 +46,7 @@ export function ShapeNode({ id, data, selected }) {
         keepAspectRatio={isRound}
       />
 
-      <NodeToolbar isVisible={selected} className="flex gap-1 rounded-lg border border-borderSoft bg-panel p-1.5 shadow-node">
+      <NodeToolbar isVisible={selected} className="flex items-center gap-1.5 rounded-lg border border-borderSoft bg-panel p-1.5 shadow-node">
         {SWATCHES.map((c) => (
           <button
             key={c}
@@ -55,6 +57,15 @@ export function ShapeNode({ id, data, selected }) {
             style={{ background: c }}
           />
         ))}
+        <span className="mx-0.5 h-4 w-px bg-borderSoft" />
+        <button
+          type="button"
+          title="Delete"
+          onClick={() => deleteNode(id)}
+          className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-red-500/15 hover:text-red-400"
+        >
+          <Trash2 size={14} />
+        </button>
       </NodeToolbar>
 
       {!isText && <ShapeSvg shape={def.key} stroke={color} fill={fill} />}
