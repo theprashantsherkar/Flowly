@@ -15,3 +15,9 @@ export const updateFlowSchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' });
 export type UpdateFlowInput = z.infer<typeof updateFlowSchema>;
+
+export const createVersionSchema = z.object({
+  label: z.string().trim().max(80).optional(),
+  snapshot: flowDocumentSchema,
+});
+export type CreateVersionInput = z.infer<typeof createVersionSchema>;

@@ -8,7 +8,7 @@ import { createYjsSync } from './yjsSync';
 const COLLAB_URL = import.meta.env.VITE_COLLAB_URL || 'ws://localhost:1234';
 const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#0ea5e9', '#d946ef', '#14b8a6'];
 
-function colorFor(id = '') {
+export function colorFor(id = '') {
   let hash = 0;
   for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   return COLORS[hash % COLORS.length];
@@ -91,6 +91,7 @@ export function useFlowCollab(flowId, seed) {
   };
 
   const getSnapshot = () => syncRef.current?.snapshot() || { nodes: [], edges: [] };
+  const restore = (snapshot) => syncRef.current?.replaceAll(snapshot?.nodes || [], snapshot?.edges || []);
 
-  return { status, synced, cursors, setCursor, getSnapshot };
+  return { status, synced, cursors, setCursor, getSnapshot, restore };
 }

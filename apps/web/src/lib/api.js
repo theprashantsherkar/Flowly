@@ -44,6 +44,11 @@ export function createApiClient(getToken) {
       request(`/flows/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
     deleteFlow: (id) => request(`/flows/${id}`, { method: 'DELETE' }),
 
+    listVersions: (id) => request(`/flows/${id}/versions`),
+    saveVersion: (id, snapshot, label) =>
+      request(`/flows/${id}/versions`, { method: 'POST', body: JSON.stringify({ snapshot, label }) }),
+    getVersion: (id, versionId) => request(`/flows/${id}/versions/${versionId}`),
+
     listTeams: () => request('/teams'),
     createTeam: (name) => request('/teams', { method: 'POST', body: JSON.stringify({ name }) }),
     getMembers: (teamId) => request(`/teams/${teamId}/members`),

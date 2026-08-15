@@ -19,6 +19,7 @@ export const buildEdge = (connection, style) => ({
 export const useStore = create((set, get) => ({
   nodes: [],
   edges: [],
+  comments: [],
   edgeStyle: 'solid', // solid | dashed | dotted — applied to new connections
   // When a flow is opened collaboratively, `sync` routes mutations through the
   // shared Yjs document instead of local state (see collab/yjsSync.js).
@@ -78,10 +79,15 @@ export const useStore = create((set, get) => ({
     });
   },
 
+  addComment: (comment) => get().sync?.addComment(comment),
+  resolveComment: (id, resolved) => get().sync?.updateComment(id, { resolved }),
+  deleteComment: (id) => get().sync?.deleteComment(id),
+
   // Direct array setters used by the Yjs observer (never delegate).
   _setNodes: (nodes) => set({ nodes }),
   _setEdges: (edges) => set({ edges }),
+  _setComments: (comments) => set({ comments }),
 
   setGraph: ({ nodes = [], edges = [] }) => set({ nodes, edges }),
-  resetGraph: () => set({ nodes: [], edges: [] }),
+  resetGraph: () => set({ nodes: [], edges: [], comments: [] }),
 }));

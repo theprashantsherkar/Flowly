@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { shallow } from 'zustand/shallow';
 import { useStore } from '../store';
 import { useApi } from '../hooks/useApi';
-import { useFlowCollab } from '../collab/useFlowCollab';
+import { useFlowCollab, colorFor } from '../collab/useFlowCollab';
 import { PipelineToolbar } from '../toolbar';
 import { PipelineUI } from '../ui';
+import { ExportMenu } from '../components/ExportMenu';
+import { VersionPanel } from '../components/VersionPanel';
 
 const stripTransient = ({ selected, dragging, resizing, ...node }) => node;
 
@@ -85,11 +88,19 @@ const editorSelector = (s) => ({ nodes: s.nodes, edges: s.edges });
 function CollabEditor({ id, initialTitle, initialDoc }) {
   const navigate = useNavigate();
   const api = useApi();
-  const { status, synced, cursors, setCursor, getSnapshot } = useFlowCollab(id, initialDoc);
+  const { user } = useUser();
+  const { status, synced, cursors, setCursor, getSnapshot, restore } = useFlowCollab(id, initialDoc);
   const { nodes, edges } = useStore(editorSelector, shallow);
+
+  const me = useMemo(
+    () => ({ name: user?.firstName || user?.username || 'Guest', color: colorFor(user?.id) }),
+    [user]
+  );
 
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState('saved');
+  const [commentMode, setCommentMode] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
 
   // Keep churny callbacks in refs so cursor-driven re-renders don't reset the
   // autosave debounce (only real graph changes should).
@@ -140,14 +151,44 @@ function CollabEditor({ id, initialTitle, initialDoc }) {
             className="rounded-md bg-transparent px-2 py-1 text-sm font-semibold text-slate-100 outline-none hover:bg-panelLight focus:bg-panelLight"
           />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <PresenceBar status={status} cursors={cursors} />
+          <button
+            type="button"
+            onClick={() => setCommentMode((v) => !v)}
+            title="Comment mode — click the canvas to leave a comment"
+            className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${
+              commentMode
+                ? 'border-accent bg-accent/20 text-white'
+                : 'border-borderSoft text-slate-200 hover:border-accent'
+            }`}
+          >
+            💬 Comment
+          </button>
           <EdgeStylePicker />
+          <ExportMenu title={title} />
+          <button
+            type="button"
+            onClick={() => setShowVersions(true)}
+            className="rounded-lg border border-borderSoft px-3 py-1.5 text-sm font-semibold text-slate-200 hover:border-accent"
+          >
+            History
+          </button>
           <SaveIndicator state={saveState} />
         </div>
       </header>
       <PipelineToolbar />
-      <PipelineUI cursors={cursors} onCursorMove={setCursor} />
+      <PipelineUI cursors={cursors} onCursorMove={setCursor} commentMode={commentMode} me={me} />
+
+      {showVersions && (
+        <VersionPanel
+          flowId={id}
+          api={api}
+          getSnapshot={getSnapshot}
+          restore={restore}
+          onClose={() => setShowVersions(false)}
+        />
+      )}
     </div>
   );
 }

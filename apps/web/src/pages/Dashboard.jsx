@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { UserButton } from '@clerk/clerk-react';
 import { useApi } from '../hooks/useApi';
 import { MembersPanel } from '../components/MembersPanel';
+import { TEMPLATES } from '../lib/templates';
 
 function formatDate(value) {
   try {
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const [status, setStatus] = useState('loading');
   const [creating, setCreating] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -67,10 +69,18 @@ export default function Dashboard() {
     setSearchParams(id ? { team: id } : {});
   };
 
-  const handleCreateFlow = async () => {
+  const handleCreateFromTemplate = async (template) => {
+    setShowTemplates(false);
     setCreating(true);
     try {
-      const flow = await api.createFlow({ teamId: selectedTeamId || undefined });
+      const flow = await api.createFlow({
+        teamId: selectedTeamId || undefined,
+        title: template.id === 'blank' ? undefined : template.name,
+      });
+      const doc = template.build();
+      if (doc.nodes.length || doc.edges.length) {
+        await api.updateFlow(flow.id, { document: doc });
+      }
       navigate(`/flow/${flow.id}`);
     } catch {
       setCreating(false);
@@ -151,7 +161,7 @@ export default function Dashboard() {
             )}
             <button
               type="button"
-              onClick={handleCreateFlow}
+              onClick={() => setShowTemplates(true)}
               disabled={creating}
               className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accentHover disabled:opacity-60"
             >
@@ -198,6 +208,38 @@ export default function Dashboard() {
 
       {showMembers && selectedTeam && (
         <MembersPanel team={selectedTeam} myRole={selectedTeam.role} onClose={() => setShowMembers(false)} />
+      )}
+
+      {showTemplates && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          onClick={() => setShowTemplates(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-borderSoft bg-panel p-6 shadow-node"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-100">Start a new flow</h2>
+              <button type="button" onClick={() => setShowTemplates(false)} className="text-slate-400 hover:text-white">
+                ✕
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+              {TEMPLATES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => handleCreateFromTemplate(t)}
+                  className="rounded-xl border border-borderSoft bg-panelLight p-4 text-left transition hover:border-accent"
+                >
+                  <h3 className="font-semibold text-slate-100">{t.name}</h3>
+                  <p className="mt-1 text-xs text-slate-400">{t.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

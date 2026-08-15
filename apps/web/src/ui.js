@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback } from 'react';
 import ReactFlow, { Controls, Background, MiniMap, ConnectionMode } from 'reactflow';
 import { shallow } from 'zustand/shallow';
+import { nanoid } from 'nanoid';
 import { SHAPE_MAP } from '@flowly/shared';
 import { useStore } from './store';
 import { ShapeNode } from './nodes/ShapeNode';
 import { CursorsLayer } from './components/CursorsLayer';
+import { CommentsLayer } from './components/CommentsLayer';
 
 import 'reactflow/dist/style.css';
 
@@ -17,18 +19,49 @@ const selector = (state) => ({
   edges: state.edges,
   getNodeID: state.getNodeID,
   addNode: state.addNode,
+  addComment: state.addComment,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
 });
 
-export const PipelineUI = ({ cursors = [], onCursorMove }) => {
+export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, me }) => {
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [commentDraft, setCommentDraft] = useState(null);
   const lastCursorAt = useRef(0);
-  const { nodes, edges, getNodeID, addNode, onNodesChange, onEdgesChange, onConnect } = useStore(
-    selector,
-    shallow
+  const { nodes, edges, getNodeID, addNode, addComment, onNodesChange, onEdgesChange, onConnect } =
+    useStore(selector, shallow);
+
+  const onPaneClick = useCallback(
+    (event) => {
+      if (!commentMode || !reactFlowInstance) return;
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const point = reactFlowInstance.project({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      });
+      setCommentDraft(point);
+    },
+    [commentMode, reactFlowInstance]
+  );
+
+  const placeComment = useCallback(
+    (text) => {
+      if (!commentDraft) return;
+      addComment({
+        id: `c-${nanoid(6)}`,
+        x: commentDraft.x,
+        y: commentDraft.y,
+        body: text,
+        author: me?.name || 'Guest',
+        color: me?.color || '#6366f1',
+        resolved: false,
+        createdAt: Date.now(),
+      });
+      setCommentDraft(null);
+    },
+    [commentDraft, addComment, me]
   );
 
   const onPointerMove = useCallback(
@@ -94,6 +127,7 @@ export const PipelineUI = ({ cursors = [], onCursorMove }) => {
         onConnect={onConnect}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onPaneClick={onPaneClick}
         onInit={setReactFlowInstance}
         nodeTypes={nodeTypes}
         proOptions={proOptions}
@@ -115,6 +149,12 @@ export const PipelineUI = ({ cursors = [], onCursorMove }) => {
           zoomable
         />
         <CursorsLayer cursors={cursors} />
+        <CommentsLayer
+          draft={commentDraft}
+          me={me}
+          onPlace={placeComment}
+          onCancelDraft={() => setCommentDraft(null)}
+        />
       </ReactFlow>
     </div>
   );

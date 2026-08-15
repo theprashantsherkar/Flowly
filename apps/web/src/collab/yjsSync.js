@@ -19,6 +19,7 @@ const stripEdge = (edge) => {
 export function createYjsSync(doc, store) {
   const yNodes = doc.getMap('nodes');
   const yEdges = doc.getMap('edges');
+  const yComments = doc.getArray('comments');
   const selectedNodes = new Set();
   const selectedEdges = new Set();
 
@@ -32,11 +33,14 @@ export function createYjsSync(doc, store) {
       Array.from(yEdges.values()).map((e) => ({ ...e, selected: selectedEdges.has(e.id) }))
     );
   };
+  const pushComments = () => store.getState()._setComments(yComments.toArray());
 
   const nodesObserver = () => pushNodes();
   const edgesObserver = () => pushEdges();
+  const commentsObserver = () => pushComments();
   yNodes.observe(nodesObserver);
   yEdges.observe(edgesObserver);
+  yComments.observe(commentsObserver);
 
   const sync = {
     onNodesChange(changes) {
@@ -119,6 +123,33 @@ export function createYjsSync(doc, store) {
       });
     },
 
+    addComment(comment) {
+      yComments.push([comment]);
+    },
+    updateComment(id, patch) {
+      const arr = yComments.toArray();
+      const idx = arr.findIndex((c) => c.id === id);
+      if (idx === -1) return;
+      doc.transact(() => {
+        yComments.delete(idx, 1);
+        yComments.insert(idx, [{ ...arr[idx], ...patch }]);
+      });
+    },
+    deleteComment(id) {
+      const idx = yComments.toArray().findIndex((c) => c.id === id);
+      if (idx >= 0) yComments.delete(idx, 1);
+    },
+
+    // Replace the whole graph (used to restore a saved version); broadcasts to all.
+    replaceAll(nodes = [], edges = []) {
+      doc.transact(() => {
+        Array.from(yNodes.keys()).forEach((k) => yNodes.delete(k));
+        Array.from(yEdges.keys()).forEach((k) => yEdges.delete(k));
+        nodes.forEach((n) => yNodes.set(n.id, stripTransient(n)));
+        edges.forEach((e) => yEdges.set(e.id, stripEdge(e)));
+      });
+    },
+
     // Seed a brand-new (empty) shared doc from the REST snapshot the first time.
     seedIfEmpty(nodes = [], edges = []) {
       if (yNodes.size === 0 && yEdges.size === 0 && (nodes.length || edges.length)) {
@@ -139,10 +170,12 @@ export function createYjsSync(doc, store) {
     destroy() {
       yNodes.unobserve(nodesObserver);
       yEdges.unobserve(edgesObserver);
+      yComments.unobserve(commentsObserver);
     },
   };
 
   pushNodes();
   pushEdges();
+  pushComments();
   return sync;
 }

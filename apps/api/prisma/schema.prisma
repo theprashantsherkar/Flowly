@@ -98,7 +98,23 @@ model Flow {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  versions FlowVersion[]
+
   @@index([ownerId])
   @@index([teamId])
   @@map("flows")
+}
+
+model FlowVersion {
+  id          String   @id @default(cuid())
+  flowId      String
+  flow        Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  // A point-in-time snapshot: { nodes: [...], edges: [...] }.
+  snapshot    Json
+  label       String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  @@index([flowId])
+  @@map("flow_versions")
 }

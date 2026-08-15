@@ -72,3 +72,37 @@ export async function deleteFlow(userId: string, id: string) {
   await prisma.flow.delete({ where: { id } });
   return { id };
 }
+
+export async function createVersion(
+  userId: string,
+  flowId: string,
+  input: { snapshot: unknown; label?: string },
+) {
+  await loadFlowWithAccess(userId, flowId);
+  return prisma.flowVersion.create({
+    data: {
+      flowId,
+      snapshot: input.snapshot as Prisma.InputJsonValue,
+      label: input.label ?? null,
+      createdById: userId,
+    },
+    select: { id: true, label: true, createdAt: true, createdById: true },
+  });
+}
+
+export async function listVersions(userId: string, flowId: string) {
+  await loadFlowWithAccess(userId, flowId);
+  return prisma.flowVersion.findMany({
+    where: { flowId },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, label: true, createdAt: true, createdById: true },
+    take: 50,
+  });
+}
+
+export async function getVersion(userId: string, flowId: string, versionId: string) {
+  await loadFlowWithAccess(userId, flowId);
+  const version = await prisma.flowVersion.findFirst({ where: { id: versionId, flowId } });
+  if (!version) throw new HttpError(404, 'Version not found');
+  return version;
+}
