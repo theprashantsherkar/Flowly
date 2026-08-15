@@ -1,0 +1,9 @@
+{
+  "name": "@flowly/collab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Flowly real-time collaboration server (Yjs + Hocuspocus). Implemented in Phase 3.",
+  "scripts": {
+    "dev": "echo \"@flowly/collab is scaffolded in Phase 3\" && exit 0"
+  }
+}

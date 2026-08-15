@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Python (legacy backend, kept for reference only)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Prisma
+apps/api/prisma/*.db
+
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
