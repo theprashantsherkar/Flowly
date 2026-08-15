@@ -1,0 +1,40 @@
+{
+  "name": "@flowly/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@clerk/clerk-react": "^5.14.0",
+    "@clerk/themes": "^2.1.37",
+    "@flowly/shared": "*",
+    "@hocuspocus/provider": "^2.13.5",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-dropdown-menu": "^2.1.2",
+    "@radix-ui/react-select": "^2.1.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "html-to-image": "^1.11.11",
+    "jspdf": "^2.5.2",
+    "lucide-react": "^0.446.0",
+    "nanoid": "^5.0.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.26.2",
+    "reactflow": "^11.8.3",
+    "tailwind-merge": "^2.5.4",
+    "yjs": "^13.6.18",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.25",
+    "tailwindcss": "^3.4.19",
+    "vite": "^5.4.2"
+  }
+}

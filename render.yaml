@@ -1,0 +1,46 @@
+# Render Blueprint for Flowly's two Node services (API + collab).
+# The web app deploys separately on Vercel (see vercel.json + DEPLOY.md).
+# Point DATABASE_URL at your Neon database; add the Clerk *production* keys.
+
+services:
+  - type: web
+    name: flowly-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: >-
+      npm install &&
+      npm run build --workspace @flowly/shared &&
+      npm run prisma:generate --workspace @flowly/api &&
+      npm run build --workspace @flowly/api
+    preDeployCommand: npm run prisma:deploy --workspace @flowly/api
+    startCommand: npm run start --workspace @flowly/api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+
+  - type: web
+    name: flowly-collab
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: >-
+      npm install &&
+      npm run build --workspace @flowly/shared &&
+      npm run prisma:generate --workspace @flowly/api &&
+      npm run build --workspace @flowly/collab
+    startCommand: npm run start --workspace @flowly/collab
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false

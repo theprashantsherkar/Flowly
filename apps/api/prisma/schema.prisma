@@ -1,0 +1,120 @@
+// Flowly database schema.
+// Phase 1: users + flows. Phase 2: teams, memberships (RBAC), invites.
+// Real-time yDoc state arrives in Phase 3.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  flows          Flow[]
+  memberships    Membership[]
+  createdInvites Invite[]
+
+  @@map("users")
+}
+
+model Team {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  isPersonal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members Membership[]
+  flows   Flow[]
+  invites Invite[]
+
+  @@map("teams")
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      Role     @default(MEMBER)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@index([teamId])
+  @@map("memberships")
+}
+
+model Invite {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  teamId      String
+  role        Role     @default(MEMBER)
+  expiresAt   DateTime?
+  maxUses     Int?
+  usedCount   Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  team      Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@map("invites")
+}
+
+model Flow {
+  id           String   @id @default(cuid())
+  title        String   @default("Untitled flow")
+  ownerId      String
+  owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  // Team the flow belongs to. Null = a personal flow (owner-only).
+  teamId       String?
+  team         Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  // Canvas snapshot: { nodes: [...], edges: [...] }. A denormalized cache of the
+  // live CRDT, used for dashboard reads, seeding, and thumbnails.
+  document     Json     @default("{\"nodes\": [], \"edges\": []}")
+  // The authoritative live Yjs document state (binary), written by the collab server.
+  yDocState    Bytes?
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  versions FlowVersion[]
+
+  @@index([ownerId])
+  @@index([teamId])
+  @@map("flows")
+}
+
+model FlowVersion {
+  id          String   @id @default(cuid())
+  flowId      String
+  flow        Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  // A point-in-time snapshot: { nodes: [...], edges: [...] }.
+  snapshot    Json
+  label       String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  @@index([flowId])
+  @@map("flow_versions")
+}
