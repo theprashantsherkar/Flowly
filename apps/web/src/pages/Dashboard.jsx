@@ -239,9 +239,13 @@ export default function Dashboard() {
                   <Users size={15} /> Members ({selectedTeam.memberCount})
                 </Button>
               )}
-              <Button size="sm" onClick={() => setShowTemplates(true)} disabled={creating}>
-                <Plus size={15} /> {creating ? 'Creating…' : 'New flow'}
-              </Button>
+              {/* Only show the corner button when there are flows — otherwise the
+                  empty-state centered button is the single call to action. */}
+              {status === 'ready' && teamFlows.length > 0 && (
+                <Button size="sm" onClick={() => setShowTemplates(true)} disabled={creating}>
+                  <Plus size={15} /> {creating ? 'Creating…' : 'New flow'}
+                </Button>
+              )}
             </div>
           </div>
 
