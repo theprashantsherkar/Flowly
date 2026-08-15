@@ -5,6 +5,7 @@ import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import Dashboard from './pages/Dashboard';
 import FlowEditorPage from './pages/FlowEditorPage';
+import InvitePage from './pages/InvitePage';
 
 function Protected({ children }) {
   return (
@@ -36,6 +37,14 @@ export default function App() {
         element={
           <Protected>
             <FlowEditorPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/invite/:token"
+        element={
+          <Protected>
+            <InvitePage />
           </Protected>
         }
       />

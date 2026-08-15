@@ -35,12 +35,26 @@ export function createApiClient(getToken) {
 
   return {
     me: () => request('/users/me'),
+
     listFlows: () => request('/flows'),
-    createFlow: (title) =>
-      request('/flows', { method: 'POST', body: JSON.stringify(title ? { title } : {}) }),
+    createFlow: (payload) =>
+      request('/flows', { method: 'POST', body: JSON.stringify(payload || {}) }),
     getFlow: (id) => request(`/flows/${id}`),
     updateFlow: (id, patch) =>
       request(`/flows/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
     deleteFlow: (id) => request(`/flows/${id}`, { method: 'DELETE' }),
+
+    listTeams: () => request('/teams'),
+    createTeam: (name) => request('/teams', { method: 'POST', body: JSON.stringify({ name }) }),
+    getMembers: (teamId) => request(`/teams/${teamId}/members`),
+    createInvite: (teamId, opts) =>
+      request(`/teams/${teamId}/invites`, { method: 'POST', body: JSON.stringify(opts || {}) }),
+    changeRole: (teamId, userId, role) =>
+      request(`/teams/${teamId}/members/${userId}`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+    removeMember: (teamId, userId) =>
+      request(`/teams/${teamId}/members/${userId}`, { method: 'DELETE' }),
+
+    previewInvite: (token) => request(`/invites/${token}`),
+    acceptInvite: (token) => request(`/invites/${token}/accept`, { method: 'POST' }),
   };
 }
