@@ -1,25 +1,23 @@
+import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// The project was migrated from Create React App: many source files use `.js`
-// extensions but contain JSX. Tell esbuild to treat every `src/**/*.js` file as
-// JSX so we don't have to rename the whole tree.
+// Bundle the shared package straight from its TypeScript source. This keeps the
+// web app self-contained (no separate "build @flowly/shared" step), so it builds
+// cleanly on Vercel with the root directory set to apps/web.
+const sharedSrc = fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url));
+
 export default defineConfig({
-  plugins: [react({ include: /\.(js|jsx)$/ })],
-  esbuild: {
-    loader: 'jsx',
-    include: /src\/.*\.(js|jsx)$/,
-    exclude: [],
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      loader: { '.js': 'jsx' },
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@flowly/shared': sharedSrc,
     },
   },
   server: {
     port: 3000,
     proxy: {
-      // Forward API calls to the NestJS backend (added in Phase 1).
+      // Forward API calls to the Express backend during local dev.
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:4000',
         changeOrigin: true,

@@ -9,7 +9,7 @@ Flowly is three deployables plus a database:
 | `apps/collab`    | Hocuspocus WebSocket server   | **Render** / Railway  |
 | database         | PostgreSQL                    | **Neon** (already)    |
 
-Config already in the repo: `vercel.json` (web), `render.yaml` (api + collab).
+Config already in the repo: `apps/web/vercel.json` (web), `render.yaml` (api + collab).
 
 Deploy order matters because the services reference each other's URLs:
 **DB → API → collab → web → wire URLs back.**
@@ -56,9 +56,11 @@ Dev keys (`pk_test_` / `sk_test_`) **do not work on a real domain**.
      Render's open-port check is enough.
 
 ## 5. Web on Vercel
-1. New Project → import this repo. Vercel reads `vercel.json`
-   (build = build `@flowly/shared` then `@flowly/web`, output `apps/web/dist`,
-   SPA rewrites for React Router).
+1. New Project → import this repo. **Set the Root Directory to `apps/web`.**
+   The web app bundles `@flowly/shared` from source (Vite alias), so it builds
+   standalone — no separate shared-build step. `apps/web/vercel.json` supplies the
+   framework (Vite → output `dist`) and SPA rewrites for React Router. Leave the
+   Build/Output/Install command overrides OFF so that file is used.
 2. Set **Environment Variables** (build-time — must be set before the build):
    - `VITE_CLERK_PUBLISHABLE_KEY` = `pk_live_…`
    - `VITE_API_URL` = `https://flowly-api.onrender.com/api`  ← note the `/api`
