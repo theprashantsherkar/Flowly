@@ -89,8 +89,11 @@ model Flow {
   // Team the flow belongs to. Null = a personal flow (owner-only).
   teamId       String?
   team         Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  // Canvas snapshot: { nodes: [...], edges: [...] }. Source of truth until Yjs (Phase 3).
+  // Canvas snapshot: { nodes: [...], edges: [...] }. A denormalized cache of the
+  // live CRDT, used for dashboard reads, seeding, and thumbnails.
   document     Json     @default("{\"nodes\": [], \"edges\": []}")
+  // The authoritative live Yjs document state (binary), written by the collab server.
+  yDocState    Bytes?
   thumbnailUrl String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

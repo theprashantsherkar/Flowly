@@ -11,11 +11,13 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.14.0",
     "@flowly/shared": "*",
+    "@hocuspocus/provider": "^2.13.5",
     "nanoid": "^5.0.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.26.2",
     "reactflow": "^11.8.3",
+    "yjs": "^13.6.18",
     "zustand": "^4.5.2"
   },
   "devDependencies": {

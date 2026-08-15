@@ -2,8 +2,25 @@
   "name": "@flowly/collab",
   "version": "0.1.0",
   "private": true,
-  "description": "Flowly real-time collaboration server (Yjs + Hocuspocus). Implemented in Phase 3.",
+  "description": "Flowly real-time collaboration server (Yjs + Hocuspocus).",
   "scripts": {
-    "dev": "echo \"@flowly/collab is scaffolded in Phase 3\" && exit 0"
+    "dev": "nodemon --watch src --ext ts --exec \"ts-node src/index.ts\"",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/backend": "^1.15.6",
+    "@hocuspocus/extension-database": "^2.13.5",
+    "@hocuspocus/server": "^2.13.5",
+    "@prisma/client": "^5.22.0",
+    "dotenv": "^16.4.5",
+    "yjs": "^13.6.18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "nodemon": "^3.1.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   }
 }

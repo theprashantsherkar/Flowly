@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { SHAPE_MAP } from '@flowly/shared';
 import { useStore } from './store';
 import { ShapeNode } from './nodes/ShapeNode';
+import { CursorsLayer } from './components/CursorsLayer';
 
 import 'reactflow/dist/style.css';
 
@@ -21,12 +22,29 @@ const selector = (state) => ({
   onConnect: state.onConnect,
 });
 
-export const PipelineUI = () => {
+export const PipelineUI = ({ cursors = [], onCursorMove }) => {
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const lastCursorAt = useRef(0);
   const { nodes, edges, getNodeID, addNode, onNodesChange, onEdgesChange, onConnect } = useStore(
     selector,
     shallow
+  );
+
+  const onPointerMove = useCallback(
+    (event) => {
+      if (!onCursorMove || !reactFlowInstance) return;
+      const now = performance.now();
+      if (now - lastCursorAt.current < 40) return; // throttle ~25fps
+      lastCursorAt.current = now;
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const point = reactFlowInstance.project({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      });
+      onCursorMove(point);
+    },
+    [onCursorMove, reactFlowInstance]
   );
 
   const onDrop = useCallback(
@@ -67,7 +85,7 @@ export const PipelineUI = () => {
   }, []);
 
   return (
-    <div ref={reactFlowWrapper} className="min-h-0 w-full flex-1 bg-canvas">
+    <div ref={reactFlowWrapper} className="min-h-0 w-full flex-1 bg-canvas" onPointerMove={onPointerMove}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -96,6 +114,7 @@ export const PipelineUI = () => {
           pannable
           zoomable
         />
+        <CursorsLayer cursors={cursors} />
       </ReactFlow>
     </div>
   );
