@@ -3,6 +3,7 @@ import { flowDocumentSchema } from '@flowly/shared';
 
 export const createFlowSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
+  teamId: z.string().min(1).optional(),
 });
 export type CreateFlowInput = z.infer<typeof createFlowSchema>;
 

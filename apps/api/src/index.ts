@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import { usersRouter } from './routes/users';
 import { flowsRouter } from './routes/flows';
+import { teamsRouter } from './routes/teams';
+import { invitesRouter } from './routes/invites';
 import { errorHandler, notFound } from './middleware/error';
 
 const app = express();
@@ -16,6 +18,8 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/users', usersRouter);
 app.use('/api/flows', flowsRouter);
+app.use('/api/teams', teamsRouter);
+app.use('/api/invites', invitesRouter);
 
 app.use(notFound);
 app.use(errorHandler);

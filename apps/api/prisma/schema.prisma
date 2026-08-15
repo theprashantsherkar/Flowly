@@ -1,6 +1,6 @@
 // Flowly database schema.
-// Phase 1: users + flows (owner-based). Teams/RBAC/invites arrive in Phase 2 as
-// an additive migration; real-time yDoc state arrives in Phase 3.
+// Phase 1: users + flows. Phase 2: teams, memberships (RBAC), invites.
+// Real-time yDoc state arrives in Phase 3.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +9,12 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
 }
 
 model User {
@@ -20,9 +26,59 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  flows Flow[]
+  flows          Flow[]
+  memberships    Membership[]
+  createdInvites Invite[]
 
   @@map("users")
+}
+
+model Team {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  isPersonal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members Membership[]
+  flows   Flow[]
+  invites Invite[]
+
+  @@map("teams")
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      Role     @default(MEMBER)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@index([teamId])
+  @@map("memberships")
+}
+
+model Invite {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  teamId      String
+  role        Role     @default(MEMBER)
+  expiresAt   DateTime?
+  maxUses     Int?
+  usedCount   Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  team      Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@map("invites")
 }
 
 model Flow {
@@ -30,6 +86,9 @@ model Flow {
   title        String   @default("Untitled flow")
   ownerId      String
   owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  // Team the flow belongs to. Null = a personal flow (owner-only).
+  teamId       String?
+  team         Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   // Canvas snapshot: { nodes: [...], edges: [...] }. Source of truth until Yjs (Phase 3).
   document     Json     @default("{\"nodes\": [], \"edges\": []}")
   thumbnailUrl String?
@@ -37,5 +96,6 @@ model Flow {
   updatedAt    DateTime @updatedAt
 
   @@index([ownerId])
+  @@index([teamId])
   @@map("flows")
 }
