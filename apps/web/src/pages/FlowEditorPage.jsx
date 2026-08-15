@@ -26,6 +26,41 @@ function SaveIndicator({ state }) {
   return <span className={`text-xs ${color}`}>{label}</span>;
 }
 
+const LINE_STYLES = [
+  { key: 'solid', label: 'Solid', preview: 'border-t-2 border-solid' },
+  { key: 'dashed', label: 'Dashed', preview: 'border-t-2 border-dashed' },
+  { key: 'dotted', label: 'Dotted', preview: 'border-t-2 border-dotted' },
+];
+
+function EdgeStylePicker() {
+  const edgeStyle = useStore((s) => s.edgeStyle);
+  const setEdgeStyle = useStore((s) => s.setEdgeStyle);
+  const setSelectedEdgesStyle = useStore((s) => s.setSelectedEdgesStyle);
+
+  const choose = (key) => {
+    setEdgeStyle(key);
+    setSelectedEdgesStyle(key); // also restyle any selected edges
+  };
+
+  return (
+    <div className="flex items-center gap-1 rounded-lg border border-borderSoft bg-panelLight p-1">
+      {LINE_STYLES.map((s) => (
+        <button
+          key={s.key}
+          type="button"
+          title={`${s.label} lines`}
+          onClick={() => choose(s.key)}
+          className={`flex h-7 w-10 items-center justify-center rounded-md transition ${
+            edgeStyle === s.key ? 'bg-accent/20 ring-1 ring-accent' : 'hover:bg-panel'
+          }`}
+        >
+          <span className={`w-6 ${s.preview} border-slate-200`} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function FlowEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -129,7 +164,10 @@ export default function FlowEditorPage() {
             className="rounded-md bg-transparent px-2 py-1 text-sm font-semibold text-slate-100 outline-none hover:bg-panelLight focus:bg-panelLight"
           />
         </div>
-        <SaveIndicator state={saveState} />
+        <div className="flex items-center gap-4">
+          <EdgeStylePicker />
+          <SaveIndicator state={saveState} />
+        </div>
       </header>
       <PipelineToolbar />
       <PipelineUI />

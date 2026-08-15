@@ -1,3 +1,3 @@
 export * from './graph';
-export * from './nodeRegistry';
+export * from './shapes';
 export * from './schemas';

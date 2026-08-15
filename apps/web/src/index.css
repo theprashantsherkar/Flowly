@@ -4,8 +4,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -15,14 +14,50 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* Connection handles: small dots, revealed on hover/selection by the node. */
 .react-flow__handle {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 9999px;
-  background: #6366f1;
-  border: 2px solid #e0e7ff;
 }
 
 .react-flow__handle:hover {
-  background: #4f46e5;
+  transform: scale(1.25);
+}
+
+/* The connection line while dragging. */
+.react-flow__connection-path {
+  stroke: #818cf8;
+  stroke-width: 2;
+}
+
+/* Resize controls (from NodeResizer). */
+.react-flow__resize-control.handle {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  border-width: 1px;
+}
+
+.react-flow__resize-control.line {
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* Selected edges pop a little. */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #818cf8 !important;
+  stroke-width: 3;
+}
+
+/* ReactFlow controls buttons on the dark theme. */
+.react-flow__controls-button {
+  background: #1c2536;
+  border-bottom: 1px solid #2d3a52;
+  color: #cbd5e1;
+}
+.react-flow__controls-button:hover {
+  background: #243044;
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
 }

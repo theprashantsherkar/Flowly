@@ -1,10 +1,26 @@
 import { create } from 'zustand';
 import { addEdge, applyNodeChanges, applyEdgeChanges, MarkerType } from 'reactflow';
 import { nanoid } from 'nanoid';
+import { EDGE_DASH_ARRAY } from '@flowly/shared';
+
+const buildEdge = (connection, style) => ({
+  ...connection,
+  type: 'smoothstep',
+  markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18, color: '#94a3b8' },
+  style: {
+    stroke: '#94a3b8',
+    strokeWidth: 2,
+    strokeDasharray: EDGE_DASH_ARRAY[style],
+    strokeLinecap: style === 'dotted' ? 'round' : 'butt',
+  },
+  data: { lineStyle: style },
+});
 
 export const useStore = create((set, get) => ({
   nodes: [],
   edges: [],
+  edgeStyle: 'solid', // solid | dashed | dotted — applied to new connections
+  setEdgeStyle: (edgeStyle) => set({ edgeStyle }),
   // Collision-safe ids: a per-session counter would clash when loading a saved
   // flow (or, later, when two people add nodes at once). nanoid avoids both.
   getNodeID: (type) => `${type}-${nanoid(6)}`,
@@ -18,22 +34,30 @@ export const useStore = create((set, get) => ({
     set({ edges: applyEdgeChanges(changes, get().edges) });
   },
   onConnect: (connection) => {
-    set({
-      edges: addEdge(
-        {
-          ...connection,
-          type: 'smoothstep',
-          animated: true,
-          markerEnd: { type: MarkerType.Arrow, height: '20px', width: '20px' },
-        },
-        get().edges
-      ),
-    });
+    set({ edges: addEdge(buildEdge(connection, get().edgeStyle), get().edges) });
   },
   updateNodeField: (nodeId, fieldName, fieldValue) => {
     set({
       nodes: get().nodes.map((node) =>
         node.id === nodeId ? { ...node, data: { ...node.data, [fieldName]: fieldValue } } : node
+      ),
+    });
+  },
+  // Restyle currently-selected edges (used by the line-style picker).
+  setSelectedEdgesStyle: (style) => {
+    set({
+      edges: get().edges.map((edge) =>
+        edge.selected
+          ? {
+              ...edge,
+              style: {
+                ...edge.style,
+                strokeDasharray: EDGE_DASH_ARRAY[style],
+                strokeLinecap: style === 'dotted' ? 'round' : 'butt',
+              },
+              data: { ...edge.data, lineStyle: style },
+            }
+          : edge
       ),
     });
   },

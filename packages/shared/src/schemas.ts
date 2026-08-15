@@ -4,7 +4,6 @@
  * malformed JSON is rejected before it ever reaches the canvas or the database.
  */
 import { z } from 'zod';
-import { NODE_TYPES } from './nodeRegistry';
 
 export const xyPositionSchema = z.object({
   x: z.number(),
@@ -16,7 +15,7 @@ export const xyPositionSchema = z.object({
 export const flowNodeSchema = z
   .object({
     id: z.string().min(1),
-    type: z.enum(NODE_TYPES as [string, ...string[]]).or(z.string()),
+    type: z.string(),
     position: xyPositionSchema,
     data: z.record(z.any()).default({}),
   })
