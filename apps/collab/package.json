@@ -5,7 +5,8 @@
   "description": "Flowly real-time collaboration server (Yjs + Hocuspocus).",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec \"ts-node src/index.ts\"",
-    "build": "tsc",
+    "prisma:generate": "prisma generate --schema=../api/prisma/schema.prisma",
+    "build": "prisma generate --schema=../api/prisma/schema.prisma && tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit"
   },
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@types/node": "^20.16.5",
     "nodemon": "^3.1.4",
+    "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
   }

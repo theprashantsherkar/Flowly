@@ -1,6 +1,9 @@
 # Render Blueprint for Flowly's two Node services (API + collab).
-# The web app deploys separately on Vercel (see vercel.json + DEPLOY.md).
+# The web app deploys separately on Vercel (see apps/web/vercel.json + DEPLOY.md).
 # Point DATABASE_URL at your Neon database; add the Clerk *production* keys.
+#
+# Each service's own `build` script runs `prisma generate` and compiles with tsc,
+# so the build works from the repo root or with a per-service root directory.
 
 services:
   - type: web
@@ -8,11 +11,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: >-
-      npm install &&
-      npm run build --workspace @flowly/shared &&
-      npm run prisma:generate --workspace @flowly/api &&
-      npm run build --workspace @flowly/api
+    buildCommand: npm install && npm run build --workspace @flowly/api
     preDeployCommand: npm run prisma:deploy --workspace @flowly/api
     startCommand: npm run start --workspace @flowly/api
     healthCheckPath: /api/health
@@ -31,11 +30,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: >-
-      npm install &&
-      npm run build --workspace @flowly/shared &&
-      npm run prisma:generate --workspace @flowly/api &&
-      npm run build --workspace @flowly/collab
+    buildCommand: npm install && npm run build --workspace @flowly/collab
     startCommand: npm run start --workspace @flowly/collab
     envVars:
       - key: NODE_VERSION
