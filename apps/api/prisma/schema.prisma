@@ -1,0 +1,41 @@
+// Flowly database schema.
+// Phase 1: users + flows (owner-based). Teams/RBAC/invites arrive in Phase 2 as
+// an additive migration; real-time yDoc state arrives in Phase 3.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  flows Flow[]
+
+  @@map("users")
+}
+
+model Flow {
+  id           String   @id @default(cuid())
+  title        String   @default("Untitled flow")
+  ownerId      String
+  owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  // Canvas snapshot: { nodes: [...], edges: [...] }. Source of truth until Yjs (Phase 3).
+  document     Json     @default("{\"nodes\": [], \"edges\": []}")
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([ownerId])
+  @@map("flows")
+}
