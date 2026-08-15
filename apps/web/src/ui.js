@@ -80,7 +80,7 @@ export const PipelineUI = () => {
   }, []);
 
   return (
-    <div ref={reactFlowWrapper} className="h-[72vh] w-full border-y border-borderSoft bg-canvas">
+    <div ref={reactFlowWrapper} className="min-h-0 w-full flex-1 border-y border-borderSoft bg-canvas">
       <ReactFlow
         nodes={nodes}
         edges={edges}

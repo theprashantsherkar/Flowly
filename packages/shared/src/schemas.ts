@@ -11,20 +11,26 @@ export const xyPositionSchema = z.object({
   y: z.number(),
 });
 
-export const flowNodeSchema = z.object({
-  id: z.string().min(1),
-  type: z.enum(NODE_TYPES as [string, ...string[]]).or(z.string()),
-  position: xyPositionSchema,
-  data: z.record(z.any()).default({}),
-});
+// passthrough() keeps ReactFlow's extra fields (width, edge styling, etc.) so a
+// saved-then-reloaded flow looks identical, while still validating the essentials.
+export const flowNodeSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.enum(NODE_TYPES as [string, ...string[]]).or(z.string()),
+    position: xyPositionSchema,
+    data: z.record(z.any()).default({}),
+  })
+  .passthrough();
 
-export const flowEdgeSchema = z.object({
-  id: z.string().min(1),
-  source: z.string().min(1),
-  target: z.string().min(1),
-  sourceHandle: z.string().nullish(),
-  targetHandle: z.string().nullish(),
-});
+export const flowEdgeSchema = z
+  .object({
+    id: z.string().min(1),
+    source: z.string().min(1),
+    target: z.string().min(1),
+    sourceHandle: z.string().nullish(),
+    targetHandle: z.string().nullish(),
+  })
+  .passthrough();
 
 export const flowDocumentSchema = z.object({
   nodes: z.array(flowNodeSchema),

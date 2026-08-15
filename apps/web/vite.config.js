@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react({ include: /\.(js|jsx)$/ })],
   esbuild: {
     loader: 'jsx',
-    include: /src\/.*\.js$/,
+    include: /src\/.*\.(js|jsx)$/,
     exclude: [],
   },
   optimizeDeps: {
