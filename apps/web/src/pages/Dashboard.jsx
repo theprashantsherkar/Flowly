@@ -34,7 +34,7 @@ const roleBadge = {
 function FlowCard({ flow, onOpen, onRename, onDelete }) {
   return (
     <div className="group relative rounded-xl border border-borderSoft bg-panel p-5 transition-colors hover:bg-panelLight">
-      <button type="button" onClick={onOpen} className="block w-full text-left">
+      <button type="button" onClick={onOpen} className="block w-full cursor-pointer text-left">
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-panelLight text-slate-400 transition-colors group-hover:bg-panel">
           <FileText size={18} />
         </span>
@@ -68,7 +68,7 @@ function SidebarItem({ active, icon, label, onClick }) {
       type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
+        'flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
         active ? 'bg-panelLight text-white' : 'text-slate-400 hover:bg-panel hover:text-slate-200'
       )}
     >
@@ -190,7 +190,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setShowNewTeam(true)}
-              className="text-slate-500 transition hover:text-white"
+              className="cursor-pointer text-slate-500 transition hover:text-white"
               aria-label="New team"
             >
               <Plus size={15} />
@@ -210,9 +210,12 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div className="mt-auto flex items-center gap-2 border-t border-borderSoft px-2 pt-4">
-          <UserButton afterSignOutUrl="/" />
-          <span className="text-xs text-slate-500">Account</span>
+        <div className="mt-auto border-t border-borderSoft px-1 pt-3">
+          <UserButton
+            showName
+            afterSignOutUrl="/"
+            appearance={{ elements: { rootBox: 'w-full', userButtonTrigger: 'w-full justify-start rounded-lg px-2 py-2 hover:bg-panelLight' } }}
+          />
         </div>
       </aside>
 
@@ -318,7 +321,7 @@ export default function Dashboard() {
                 key={t.id}
                 type="button"
                 onClick={() => handleCreateFromTemplate(t)}
-                className="rounded-xl border border-borderSoft bg-panelLight p-4 text-left transition-colors hover:bg-panel"
+                className="cursor-pointer rounded-xl border border-borderSoft bg-panelLight p-4 text-left transition-colors hover:bg-panel"
               >
                 <h3 className="font-medium text-slate-100">{t.name}</h3>
                 <p className="mt-1 text-xs text-slate-400">{t.description}</p>

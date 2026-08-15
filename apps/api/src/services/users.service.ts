@@ -1,39 +1,47 @@
+import type { User } from '@prisma/client';
 import { prisma } from '../prisma';
 import { getUserProfile } from '../clerk';
 import { randomSuffix } from '../lib/ids';
 
-/**
- * Resolves the local DB user for a Clerk id, creating it on first sight
- * (just-in-time provisioning) together with a personal team they own. Upsert
- * guards against duplicate creation when a user's first two requests race.
- */
-export async function resolveByClerkId(clerkId: string) {
-  const existing = await prisma.user.findUnique({ where: { clerkId } });
-  if (existing) return existing;
+/** Every user gets exactly one personal team they own. Idempotent — also
+ *  backfills users created before personal teams existed. */
+async function ensurePersonalTeam(user: User) {
+  const existing = await prisma.membership.findFirst({
+    where: { userId: user.id, team: { isPersonal: true } },
+  });
+  if (existing) return;
 
-  const profile = await getUserProfile(clerkId);
-  const displayName = profile.name ?? 'My';
-
-  return prisma.user.upsert({
-    where: { clerkId },
-    update: {},
-    create: {
-      clerkId,
-      email: profile.email ?? `${clerkId}@users.flowly.local`,
-      name: profile.name,
-      avatarUrl: profile.avatarUrl,
-      memberships: {
-        create: {
-          role: 'OWNER',
-          team: {
-            create: {
-              name: `${displayName}'s space`,
-              slug: `personal-${randomSuffix()}`,
-              isPersonal: true,
-            },
-          },
-        },
-      },
+  await prisma.team.create({
+    data: {
+      name: `${user.name ?? 'My'}'s space`,
+      slug: `personal-${randomSuffix()}`,
+      isPersonal: true,
+      members: { create: { userId: user.id, role: 'OWNER' } },
     },
   });
+}
+
+/**
+ * Resolves the local DB user for a Clerk id, creating it on first sight
+ * (just-in-time provisioning) and guaranteeing a personal team exists.
+ */
+export async function resolveByClerkId(clerkId: string) {
+  let user = await prisma.user.findUnique({ where: { clerkId } });
+
+  if (!user) {
+    const profile = await getUserProfile(clerkId);
+    user = await prisma.user.upsert({
+      where: { clerkId },
+      update: {},
+      create: {
+        clerkId,
+        email: profile.email ?? `${clerkId}@users.flowly.local`,
+        name: profile.name,
+        avatarUrl: profile.avatarUrl,
+      },
+    });
+  }
+
+  await ensurePersonalTeam(user);
+  return user;
 }
