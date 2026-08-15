@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.14.0",
+    "@clerk/themes": "^2.1.37",
     "@flowly/shared": "*",
     "@hocuspocus/provider": "^2.13.5",
     "@radix-ui/react-dialog": "^1.1.2",

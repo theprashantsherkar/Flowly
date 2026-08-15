@@ -210,11 +210,20 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div className="mt-auto border-t border-borderSoft px-1 pt-3">
+        <div className="mt-auto border-t border-borderSoft pt-3">
           <UserButton
             showName
             afterSignOutUrl="/"
-            appearance={{ elements: { rootBox: 'w-full', userButtonTrigger: 'w-full justify-start rounded-lg px-2 py-2 hover:bg-panelLight' } }}
+            appearance={{
+              elements: {
+                rootBox: 'w-full',
+                userButtonTrigger:
+                  'w-full rounded-lg px-2 py-2 transition hover:bg-panelLight focus:shadow-none focus-visible:ring-0 data-[state=open]:bg-panelLight',
+                userButtonBox: 'w-full flex-row-reverse justify-end gap-2.5',
+                userButtonOuterIdentifier: 'text-sm font-medium text-slate-200',
+                userButtonAvatarBox: 'h-7 w-7',
+              },
+            }}
           />
         </div>
       </aside>
