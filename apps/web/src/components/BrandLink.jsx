@@ -7,8 +7,8 @@ export function BrandLink({ className }) {
   const { isSignedIn } = useAuth();
   return (
     <Link to={isSignedIn ? '/dashboard' : '/'} className={cn('inline-flex items-center gap-2', className)}>
-      <img src="/flowly-logo.png" alt="" className="h-6 w-auto" />
-      <span className="text-base font-semibold tracking-tight text-slate-100">Flowly</span>
+      <img src="/flowly-logo.png" alt="" className="h-8 w-auto" />
+      <span className="text-lg font-semibold tracking-tight text-slate-100">Flowly</span>
     </Link>
   );
 }
