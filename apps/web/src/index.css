@@ -67,3 +67,68 @@ code {
 .react-flow__controls-button svg {
   fill: currentColor;
 }
+
+/* Onboarding tutorial — subtle motion so the illustrations feel alive
+   without looking gimmicky. */
+@keyframes onb-drag {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(10px, -8px);
+  }
+}
+@keyframes onb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.onb-drag {
+  animation: onb-drag 2.6s ease-in-out infinite;
+}
+.onb-rise {
+  animation: onb-rise 0.35s ease-out both;
+}
+
+/* Coachmark hand: a pseudo-drag from the toolbar down onto the canvas. */
+@keyframes onb-hand-drag {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  12% {
+    transform: translate(0, 0) scale(0.88);
+  }
+  65% {
+    transform: translate(52px, 104px) scale(0.88);
+  }
+  80% {
+    transform: translate(52px, 104px) scale(1);
+  }
+  100% {
+    transform: translate(52px, 104px) scale(1);
+    opacity: 0;
+  }
+}
+.onb-hand-drag {
+  animation: onb-hand-drag 2.2s ease-in-out infinite;
+}
+
+/* Coachmark hand: a gentle tap over a button. */
+@keyframes onb-hand-tap {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(0, 4px) scale(0.85);
+  }
+}
+.onb-hand-tap {
+  animation: onb-hand-tap 1.2s ease-in-out infinite;
+}
