@@ -1,8 +1,29 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { Pointer } from 'lucide-react';
 import { ShapeSvg } from '../nodes/ShapeSvg';
 import { Button } from './ui/button';
 import { cn } from '../lib/cn';
+
+/** A solid, filled pointing-hand cursor — reads clearly at small size. */
+function TourHand() {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      className="drop-shadow-[0_3px_5px_rgba(0,0,0,0.55)]"
+    >
+      <path
+        d="M12.4 5a1.9 1.9 0 0 1 3.8 0V13.5h3.4a5 5 0 0 1 5 5v1.2a6.5 6.5 0 0 1-6.5 6.5h-1.5a6.6 6.6 0 0 1-5.2-2.5l-3.4-4.4a2 2 0 0 1 3-2.6l1.1 1.1Z"
+        fill="#ffffff"
+        stroke="#0f172a"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 // Bumped when the tour changes so returning users see the new one once.
 const STORAGE_KEY = 'flowly:onboarded:v2';
@@ -142,7 +163,7 @@ export function OnboardingTutorial() {
               <ShapeSvg shape="process" stroke="#2563eb" fill="#2563eb22" strokeWidth={2} />
             </div>
           )}
-          <Pointer size={28} className="fill-white text-slate-900 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
+          <TourHand />
         </div>
       </div>
 
