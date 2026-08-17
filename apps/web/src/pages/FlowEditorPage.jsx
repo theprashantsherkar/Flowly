@@ -10,6 +10,7 @@ import { PipelineToolbar } from '../toolbar';
 import { PipelineUI } from '../ui';
 import { ExportMenu } from '../components/ExportMenu';
 import { VersionPanel } from '../components/VersionPanel';
+import { OnboardingTutorial } from '../components/OnboardingTutorial';
 import { BrandLink } from '../components/BrandLink';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -197,8 +198,15 @@ function CollabEditor({ id, initialTitle, initialDoc }) {
             <MessageSquare size={15} /> Comment
           </Button>
           <EdgeStylePicker />
-          <ExportMenu title={title} />
-          <Button variant="secondary" size="sm" onClick={() => setShowVersions(true)}>
+          <span data-tour="export" className="inline-flex">
+            <ExportMenu title={title} />
+          </span>
+          <Button
+            data-tour="history"
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowVersions(true)}
+          >
             <History size={15} /> History
           </Button>
           <SaveIndicator state={saveState} />
@@ -222,6 +230,8 @@ function CollabEditor({ id, initialTitle, initialDoc }) {
           onClose={() => setShowVersions(false)}
         />
       )}
+
+      <OnboardingTutorial />
     </div>
   );
 }
