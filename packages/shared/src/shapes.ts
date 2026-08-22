@@ -17,6 +17,7 @@ export type ShapeKey =
   | 'document'
   | 'connector'
   | 'preparation'
+  | 'arrow'
   | 'note'
   | 'text';
 
@@ -95,6 +96,14 @@ export const SHAPE_DEFINITIONS: ShapeDefinition[] = [
     category: 'flowchart',
     defaultSize: { width: 68, height: 68 },
     defaultColor: '#f43f5e',
+  },
+  {
+    key: 'arrow',
+    label: 'Arrow',
+    description: 'A standalone arrow or line.',
+    category: 'annotation',
+    defaultSize: { width: 180, height: 24 },
+    defaultColor: '#94a3b8',
   },
   {
     key: 'note',

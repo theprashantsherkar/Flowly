@@ -35,6 +35,7 @@ export function ShapeNode({ id, data, selected }) {
   const fill = isNote ? hexToRgba(color, 0.92) : isText ? 'transparent' : hexToRgba(color, 0.14);
   const textColor = isNote ? '#1c1917' : '#e2e8f0';
   const isRound = def.key === 'connector';
+  const isArrow = def.key === 'arrow';
 
   return (
     <div className="group relative h-full w-full">
@@ -70,16 +71,17 @@ export function ShapeNode({ id, data, selected }) {
 
       {!isText && <ShapeSvg shape={def.key} stroke={color} fill={fill} />}
 
-      {SIDES.map(([name, position]) => (
-        <Handle
-          key={name}
-          id={name}
-          type="source"
-          position={position}
-          className="!h-2.5 !w-2.5 !border-2 !bg-panel opacity-0 transition-opacity group-hover:opacity-100"
-          style={{ borderColor: color }}
-        />
-      ))}
+      {!isArrow &&
+        SIDES.map(([name, position]) => (
+          <Handle
+            key={name}
+            id={name}
+            type="source"
+            position={position}
+            className="!h-2.5 !w-2.5 !border-2 !bg-panel opacity-0 transition-opacity group-hover:opacity-100"
+            style={{ borderColor: color }}
+          />
+        ))}
 
       <div
         className="absolute inset-0 flex items-center justify-center p-2"
@@ -104,12 +106,25 @@ export function ShapeNode({ id, data, selected }) {
             style={{ color: textColor }}
           />
         ) : (
-          <span
-            className="pointer-events-none select-none whitespace-pre-wrap break-words text-center text-sm leading-snug"
-            style={{ color: textColor }}
-          >
-            {label || <span className="opacity-40">{def.label}</span>}
-          </span>
+          <>
+            {isArrow ? (
+              label ? (
+                <span
+                  className="pointer-events-none -translate-y-full select-none rounded-full bg-panel/80 px-2 py-0.5 text-[11px] font-medium text-slate-200 shadow-sm backdrop-blur"
+                  style={{ color: textColor }}
+                >
+                  {label}
+                </span>
+              ) : null
+            ) : (
+              <span
+                className="pointer-events-none select-none whitespace-pre-wrap break-words text-center text-sm leading-snug"
+                style={{ color: textColor }}
+              >
+                {label || <span className="opacity-40">{def.label}</span>}
+              </span>
+            )}
+          </>
         )}
       </div>
     </div>
