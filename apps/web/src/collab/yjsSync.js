@@ -75,6 +75,12 @@ export function createYjsSync(doc, store) {
       const current = Array.from(yEdges.values()).map((e) => ({ ...e, selected: selectedEdges.has(e.id) }));
       const next = applyEdgeChanges(changes, current);
       const byId = new Map(next.map((e) => [e.id, e]));
+      const removedEndpointIds = new Set(
+        Array.from(yEdges.values())
+          .filter((edge) => changes.some((change) => change.type === 'remove' && change.id === edge.id))
+          .map((edge) => edge.data?.freeEndId)
+          .filter(Boolean)
+      );
       let selectionChanged = false;
 
       doc.transact(() => {
@@ -90,6 +96,9 @@ export function createYjsSync(doc, store) {
             const edge = byId.get(change.id);
             if (edge) yEdges.set(edge.id, stripEdge(edge));
           }
+        }
+        if (removedEndpointIds.size) {
+          removedEndpointIds.forEach((nodeId) => yNodes.delete(nodeId));
         }
       });
       if (selectionChanged) pushEdges();

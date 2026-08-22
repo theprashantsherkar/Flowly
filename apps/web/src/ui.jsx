@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid';
 import { SHAPE_MAP } from '@flowly/shared';
 import { useStore } from './store';
 import { ShapeNode } from './nodes/ShapeNode';
+import { FreeEndpointNode } from './nodes/FreeEndpointNode';
 import { CursorsLayer } from './components/CursorsLayer';
 import { CommentsLayer } from './components/CommentsLayer';
 
@@ -12,13 +13,14 @@ import 'reactflow/dist/style.css';
 
 const gridSize = 16;
 const proOptions = { hideAttribution: true };
-const nodeTypes = { shape: ShapeNode };
+const nodeTypes = { shape: ShapeNode, 'free-endpoint': FreeEndpointNode };
 
 const selector = (state) => ({
   nodes: state.nodes,
   edges: state.edges,
   getNodeID: state.getNodeID,
   addNode: state.addNode,
+  addFloatingEdge: state.addFloatingEdge,
   addComment: state.addComment,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
@@ -29,8 +31,10 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [commentDraft, setCommentDraft] = useState(null);
+  const connectionStart = useRef(null);
+  const connectionWasMade = useRef(false);
   const lastCursorAt = useRef(0);
-  const { nodes, edges, getNodeID, addNode, addComment, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, getNodeID, addFloatingEdge, addComment, onNodesChange, onEdgesChange, onConnect } =
     useStore(selector, shallow);
 
   const onPaneClick = useCallback(
@@ -117,6 +121,52 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const onConnectStart = useCallback((_, params) => {
+    connectionStart.current = params;
+    connectionWasMade.current = false;
+  }, []);
+
+  const handleConnect = useCallback(
+    (connection) => {
+      connectionWasMade.current = true;
+      onConnect(connection);
+    },
+    [onConnect]
+  );
+
+  const onConnectEnd = useCallback(
+    (event) => {
+      if (!connectionStart.current || connectionWasMade.current || !reactFlowInstance) {
+        connectionStart.current = null;
+        connectionWasMade.current = false;
+        return;
+      }
+      const { nodeId, handleId, handleType } = connectionStart.current;
+      if (!nodeId || handleType !== 'source') {
+        connectionStart.current = null;
+        connectionWasMade.current = false;
+        return;
+      }
+
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const client = 'changedTouches' in event ? event.changedTouches[0] : event;
+      const point = reactFlowInstance.project({
+        x: client.clientX - bounds.left,
+        y: client.clientY - bounds.top,
+      });
+
+      addFloatingEdge({
+        source: nodeId,
+        sourceHandle: handleId || undefined,
+        position: point,
+      });
+
+      connectionStart.current = null;
+      connectionWasMade.current = false;
+    },
+    [addFloatingEdge, reactFlowInstance]
+  );
+
   return (
     <div ref={reactFlowWrapper} className="min-h-0 w-full flex-1 bg-canvas" onPointerMove={onPointerMove}>
       <ReactFlow
@@ -124,7 +174,9 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onPaneClick={onPaneClick}
@@ -145,7 +197,7 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
         <Background color="#1e2532" gap={gridSize} />
         <Controls className="!border-borderSoft !bg-panel" />
         <MiniMap
-          nodeColor={(n) => n.data?.color || '#2563eb'}
+          nodeColor={(n) => (n.type === 'free-endpoint' ? 'transparent' : n.data?.color || '#2563eb')}
           maskColor="rgba(15, 20, 32, 0.6)"
           className="!bg-panel"
           pannable

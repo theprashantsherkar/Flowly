@@ -9,6 +9,8 @@
 
 export interface GraphNode {
   id: string;
+  type?: string;
+  data?: { kind?: string };
 }
 
 export interface GraphEdge {
@@ -18,7 +20,8 @@ export interface GraphEdge {
 
 /** Edges that reference a node id not present in `nodes` are ignored, matching the original behaviour. */
 function buildAdjacency(nodes: GraphNode[], edges: GraphEdge[]) {
-  const nodeIds = new Set(nodes.map((n) => n.id));
+  const activeNodes = nodes.filter((n) => n.type !== 'free-endpoint' && n.data?.kind !== 'free-endpoint');
+  const nodeIds = new Set(activeNodes.map((n) => n.id));
   const adjacency = new Map<string, string[]>();
   const inDegree = new Map<string, number>();
 
@@ -83,12 +86,13 @@ export function findCycleNodes(nodes: GraphNode[], edges: GraphEdge[]): string[]
 
 /** Node ids that have no connected edges at all. */
 export function orphanNodes(nodes: GraphNode[], edges: GraphEdge[]): string[] {
+  const activeNodes = nodes.filter((n) => n.type !== 'free-endpoint' && n.data?.kind !== 'free-endpoint');
   const connected = new Set<string>();
   for (const edge of edges) {
     connected.add(edge.source);
     connected.add(edge.target);
   }
-  return nodes.filter((n) => !connected.has(n.id)).map((n) => n.id);
+  return activeNodes.filter((n) => !connected.has(n.id)).map((n) => n.id);
 }
 
 export interface GraphAnalysis {

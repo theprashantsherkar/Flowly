@@ -38,6 +38,14 @@ export function ShapeSvg({ shape, stroke = '#6366f1', fill = 'rgba(99,102,241,0.
     case 'connector':
       body = <ellipse cx="50" cy="50" rx="47" ry="47" {...common} />;
       break;
+    case 'arrow':
+      body = (
+        <>
+          <path d="M4,50 H84" {...line} />
+          <path d="M84,50 L66,38 L66,62 Z" fill={stroke} stroke="none" vectorEffect="non-scaling-stroke" />
+        </>
+      );
+      break;
     case 'document':
       body = <path d="M2,2 L98,2 L98,82 C74,101 26,67 2,82 Z" {...common} />;
       break;

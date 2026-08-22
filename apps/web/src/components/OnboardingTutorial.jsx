@@ -26,16 +26,24 @@ function TourHand() {
 }
 
 // Bumped when the tour changes so returning users see the new one once.
-const STORAGE_KEY = 'flowly:onboarded:v2';
+const STORAGE_KEY = 'flowly:onboarded:v3';
 
 const STEPS = [
   {
     key: 'build',
     selector: '[data-tour="build"]',
     tag: 'Build',
-    body: 'Drag shapes onto the canvas to build your flows and diagrams.',
+    body: 'Drag shapes and arrows onto the canvas to build your flows and diagrams.',
     hand: 'drag',
     place: 'below-left',
+  },
+  {
+    key: 'arrow-tool',
+    selector: '[data-tour="arrow-tool"]',
+    tag: 'Arrow',
+    body: 'Use this to draw a free-ended arrow or line. Drop it on the canvas even if you do not want it to connect to another shape.',
+    hand: 'drag',
+    place: 'below-right',
   },
   {
     key: 'export',

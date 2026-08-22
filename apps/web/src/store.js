@@ -1,10 +1,26 @@
 import { create } from 'zustand';
-import { addEdge, applyNodeChanges, applyEdgeChanges, MarkerType } from 'reactflow';
+import { addEdge as rfAddEdge, applyNodeChanges, applyEdgeChanges, MarkerType } from 'reactflow';
 import { nanoid } from 'nanoid';
 import { EDGE_DASH_ARRAY } from '@flowly/shared';
 
-export const buildEdge = (connection, style) => ({
+const FREE_ENDPOINT_TYPE = 'free-endpoint';
+
+const isFreeEndpoint = (node) => node?.type === FREE_ENDPOINT_TYPE || node?.data?.kind === FREE_ENDPOINT_TYPE;
+
+const freeEndpointNode = (id, position) => ({
+  id,
+  type: FREE_ENDPOINT_TYPE,
+  position,
+  data: { kind: FREE_ENDPOINT_TYPE },
+  draggable: false,
+  selectable: false,
+  connectable: false,
+  hidden: false,
+});
+
+export const buildEdge = (connection, style, extra = {}) => ({
   ...connection,
+  ...extra,
   type: 'smoothstep',
   markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18, color: '#94a3b8' },
   style: {
@@ -13,7 +29,7 @@ export const buildEdge = (connection, style) => ({
     strokeDasharray: EDGE_DASH_ARRAY[style],
     strokeLinecap: style === 'dotted' ? 'round' : 'butt',
   },
-  data: { lineStyle: style },
+  data: { lineStyle: style, ...(extra.data || {}) },
 });
 
 export const useStore = create((set, get) => ({
@@ -34,6 +50,11 @@ export const useStore = create((set, get) => ({
     if (sync) return sync.addNode(node);
     set({ nodes: [...get().nodes, node] });
   },
+  addEdge: (edge) => {
+    const { sync } = get();
+    if (sync) return sync.addEdge(edge);
+    set({ edges: rfAddEdge(edge, get().edges) });
+  },
   onNodesChange: (changes) => {
     const { sync } = get();
     if (sync) return sync.onNodesChange(changes);
@@ -42,13 +63,36 @@ export const useStore = create((set, get) => ({
   onEdgesChange: (changes) => {
     const { sync } = get();
     if (sync) return sync.onEdgesChange(changes);
+    const removedEndpointIds = new Set(
+      get()
+        .edges.filter((edge) => changes.some((change) => change.type === 'remove' && change.id === edge.id))
+        .map((edge) => edge.data?.freeEndId)
+        .filter(Boolean)
+    );
     set({ edges: applyEdgeChanges(changes, get().edges) });
+    if (removedEndpointIds.size) {
+      set({
+        nodes: get().nodes.filter((node) => !removedEndpointIds.has(node.id)),
+      });
+    }
   },
   onConnect: (connection) => {
-    const { sync } = get();
-    const edge = buildEdge(connection, get().edgeStyle);
-    if (sync) return sync.addEdge(edge);
-    set({ edges: addEdge(edge, get().edges) });
+    get().addEdge(buildEdge(connection, get().edgeStyle));
+  },
+  addFloatingEdge: ({ source, sourceHandle, position }) => {
+    const endpointId = `free-endpoint-${nanoid(6)}`;
+    const connection = {
+      source,
+      sourceHandle,
+      target: endpointId,
+      targetHandle: 'free',
+    };
+    const edge = buildEdge(connection, get().edgeStyle, {
+      data: { freeEndId: endpointId },
+    });
+    get().addNode(freeEndpointNode(endpointId, position));
+    get().addEdge(edge);
+    return edge;
   },
   updateNodeField: (nodeId, fieldName, fieldValue) => {
     const { sync } = get();
