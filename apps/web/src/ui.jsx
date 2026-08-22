@@ -34,7 +34,7 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
   const connectionStart = useRef(null);
   const connectionWasMade = useRef(false);
   const lastCursorAt = useRef(0);
-  const { nodes, edges, getNodeID, addFloatingEdge, addComment, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, getNodeID, addNode, addFloatingEdge, addComment, onNodesChange, onEdgesChange, onConnect } =
     useStore(selector, shallow);
 
   const onPaneClick = useCallback(
