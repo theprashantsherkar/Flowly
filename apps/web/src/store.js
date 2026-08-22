@@ -5,8 +5,6 @@ import { EDGE_DASH_ARRAY } from '@flowly/shared';
 
 const FREE_ENDPOINT_TYPE = 'free-endpoint';
 
-const isFreeEndpoint = (node) => node?.type === FREE_ENDPOINT_TYPE || node?.data?.kind === FREE_ENDPOINT_TYPE;
-
 const freeEndpointNode = (id, position) => ({
   id,
   type: FREE_ENDPOINT_TYPE,
