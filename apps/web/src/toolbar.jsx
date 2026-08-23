@@ -2,7 +2,12 @@ import { SHAPE_DEFINITIONS } from '@flowly/shared';
 import { DraggableNode } from './draggableNode';
 
 const flowchart = SHAPE_DEFINITIONS.filter((s) => s.category === 'flowchart');
-const annotation = SHAPE_DEFINITIONS.filter((s) => s.category === 'annotation');
+// A plain line (arrow without a head) — a web-only connector tool, so it isn't in
+// the shared shape registry. Slot it in right before the arrow.
+const LINE_TOOL = { key: 'line', label: 'Line', defaultColor: '#94a3b8' };
+const annotation = SHAPE_DEFINITIONS.filter((s) => s.category === 'annotation').flatMap((s) =>
+  s.key === 'arrow' ? [LINE_TOOL, s] : [s]
+);
 
 function Group({ title, shapes }) {
   return (
@@ -25,9 +30,11 @@ export const PipelineToolbar = () => {
         <div className="self-stretch border-l border-borderSoft" />
         <Group title="Annotate" shapes={annotation} />
       </div>
-      <div className="hidden max-w-[240px] rounded-lg border border-borderSoft bg-panelLight px-3 py-2 text-[11px] leading-relaxed text-slate-400 lg:block">
-        Drag <span className="font-semibold text-slate-200">Arrow</span> for free-ended lines, or start from a
-        shape and drop onto empty space to leave a dangling connector.
+      <div className="hidden max-w-[260px] rounded-lg border border-borderSoft bg-panelLight px-3 py-2 text-[11px] leading-relaxed text-slate-400 lg:block">
+        Drag <span className="font-semibold text-slate-200">Arrow</span> or{' '}
+        <span className="font-semibold text-slate-200">Line</span> onto the canvas for a free-floating connector —
+        grab either end dot to move it. Or drag from a shape’s edge and drop on empty space to leave the arrow
+        dangling.
       </div>
     </div>
   );

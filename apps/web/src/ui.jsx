@@ -21,6 +21,7 @@ const selector = (state) => ({
   getNodeID: state.getNodeID,
   addNode: state.addNode,
   addFloatingEdge: state.addFloatingEdge,
+  addStandaloneArrow: state.addStandaloneArrow,
   addComment: state.addComment,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
@@ -34,7 +35,7 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
   const connectionStart = useRef(null);
   const connectionWasMade = useRef(false);
   const lastCursorAt = useRef(0);
-  const { nodes, edges, getNodeID, addNode, addFloatingEdge, addComment, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, getNodeID, addNode, addFloatingEdge, addStandaloneArrow, addComment, onNodesChange, onEdgesChange, onConnect } =
     useStore(selector, shallow);
 
   const onPaneClick = useCallback(
@@ -92,13 +93,22 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
       if (!raw) return;
 
       const shape = JSON.parse(raw)?.shape;
-      const def = SHAPE_MAP[shape];
-      if (!def) return;
 
       const dropped = reactFlowInstance.project({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       });
+
+      // Arrow/Line are free-floating connectors, not shapes: drop a standalone
+      // arrow (with head) or line (no head) centered on the cursor.
+      if (shape === 'arrow' || shape === 'line') {
+        addStandaloneArrow({ position: dropped, withHead: shape === 'arrow' });
+        return;
+      }
+
+      const def = SHAPE_MAP[shape];
+      if (!def) return;
+
       // Center the shape on the cursor.
       const position = {
         x: dropped.x - def.defaultSize.width / 2,
@@ -113,7 +123,7 @@ export const PipelineUI = ({ cursors = [], onCursorMove, commentMode = false, se
         style: { width: def.defaultSize.width, height: def.defaultSize.height },
       });
     },
-    [reactFlowInstance, getNodeID, addNode]
+    [reactFlowInstance, getNodeID, addNode, addStandaloneArrow]
   );
 
   const onDragOver = useCallback((event) => {

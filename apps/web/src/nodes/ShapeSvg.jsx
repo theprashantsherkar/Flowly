@@ -46,6 +46,9 @@ export function ShapeSvg({ shape, stroke = '#6366f1', fill = 'rgba(99,102,241,0.
         </>
       );
       break;
+    case 'line':
+      body = <path d="M4,50 H96" {...line} />;
+      break;
     case 'document':
       body = <path d="M2,2 L98,2 L98,82 C74,101 26,67 2,82 Z" {...common} />;
       break;
