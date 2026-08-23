@@ -1,6 +1,8 @@
 import { applyNodeChanges, applyEdgeChanges } from 'reactflow';
 import { EDGE_DASH_ARRAY } from '@flowly/shared';
 
+const FREE_ENDPOINT_TYPE = 'free-endpoint';
+
 // Selection and drag state stay local (per-user); everything else is shared.
 const stripTransient = (node) => {
   const { selected, dragging, resizing, ...rest } = node;
@@ -35,6 +37,23 @@ export function createYjsSync(doc, store) {
   };
   const pushComments = () => store.getState()._setComments(yComments.toArray());
 
+  // Drop any floating endpoint node no longer referenced by an edge (e.g. after
+  // an arrow is deleted). Mirrors pruneFreeEndpoints in the local store.
+  const pruneFreeEndpoints = () => {
+    const referenced = new Set();
+    yEdges.forEach((edge) => {
+      referenced.add(edge.source);
+      referenced.add(edge.target);
+    });
+    const orphans = [];
+    yNodes.forEach((node, id) => {
+      if (node.type === FREE_ENDPOINT_TYPE && !referenced.has(id)) orphans.push(id);
+    });
+    if (orphans.length) {
+      doc.transact(() => orphans.forEach((id) => yNodes.delete(id)));
+    }
+  };
+
   const nodesObserver = () => pushNodes();
   const edgesObserver = () => pushEdges();
   const commentsObserver = () => pushComments();
@@ -64,6 +83,8 @@ export function createYjsSync(doc, store) {
           }
         }
       });
+      // A directly-deleted floating endpoint may leave its partner orphaned.
+      if (changes.some((c) => c.type === 'remove')) pruneFreeEndpoints();
       if (selectionChanged) pushNodes();
     },
 
@@ -75,19 +96,15 @@ export function createYjsSync(doc, store) {
       const current = Array.from(yEdges.values()).map((e) => ({ ...e, selected: selectedEdges.has(e.id) }));
       const next = applyEdgeChanges(changes, current);
       const byId = new Map(next.map((e) => [e.id, e]));
-      const removedEndpointIds = new Set(
-        Array.from(yEdges.values())
-          .filter((edge) => changes.some((change) => change.type === 'remove' && change.id === edge.id))
-          .map((edge) => edge.data?.freeEndId)
-          .filter(Boolean)
-      );
       let selectionChanged = false;
+      let removed = false;
 
       doc.transact(() => {
         for (const change of changes) {
           if (change.type === 'remove') {
             yEdges.delete(change.id);
             selectedEdges.delete(change.id);
+            removed = true;
           } else if (change.type === 'select') {
             selectionChanged = true;
             if (change.selected) selectedEdges.add(change.id);
@@ -97,10 +114,8 @@ export function createYjsSync(doc, store) {
             if (edge) yEdges.set(edge.id, stripEdge(edge));
           }
         }
-        if (removedEndpointIds.size) {
-          removedEndpointIds.forEach((nodeId) => yNodes.delete(nodeId));
-        }
       });
+      if (removed) pruneFreeEndpoints();
       if (selectionChanged) pushEdges();
     },
 
